@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+name: AssertWebViewText
+---
+- scrollUntilVisible:
+    element:
+      text: '${TEXT}'
+    direction: DOWN
+    timeout: 20000
+    optional: true
+- extendedWaitUntil:
+    visible: '${TEXT}'
+    timeout: 25000

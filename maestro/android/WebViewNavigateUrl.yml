@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+name: WebViewNavigateUrl
+---
+- tapOn:
+    id: 'com.expandtesting.practice:id/et_url'
+- eraseText
+- inputText: '${URL}'
+- hideKeyboard
+- tapOn:
+    id: 'com.expandtesting.practice:id/btn_go'
+- waitForAnimationToEnd:
+    timeout: 5000

@@ -1,0 +1,7 @@
+appId: ${APP_ID}
+name: CounterReset
+---
+- runFlow:
+    when:
+      platform: Android
+    file: ../android/CounterReset.yml

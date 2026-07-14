@@ -1,0 +1,17 @@
+# Example — headless quality gate for GitLab CI
+# Copy to .gitlab-ci.yml or include from this path.
+
+stages:
+  - test
+
+e2e-headless:
+  stage: test
+  image: node:20
+  script:
+    - npm ci
+    - npm run check
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+  # Optional: device job + artifacts reports/ — see docs/CI.md

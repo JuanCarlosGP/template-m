@@ -1,0 +1,25 @@
+# Example — headless quality gate for GitHub Actions
+# Copy to .github/workflows/e2e-headless.yml in your project.
+
+name: E2E headless
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run check
+
+      # Optional: add a device job and upload reports/ — see docs/CI.md

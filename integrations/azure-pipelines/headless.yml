@@ -1,0 +1,23 @@
+# Example — headless quality gate for Azure Pipelines
+# Copy into your azure-pipelines.yml or as a template stage.
+
+trigger:
+  - main
+  - master
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+    displayName: Install Node.js
+
+  - script: npm ci
+    displayName: Install dependencies
+
+  - script: npm run check
+    displayName: Headless quality gate
+
+  # Optional: device job + PublishPipelineArtifact for reports/ — see docs/CI.md

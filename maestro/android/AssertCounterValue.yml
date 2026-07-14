@@ -1,0 +1,6 @@
+appId: ${APP_ID}
+name: AssertCounterValue
+---
+- assertVisible:
+    id: 'com.expandtesting.practice:id/tv_counter'
+    text: '${VALUE}'

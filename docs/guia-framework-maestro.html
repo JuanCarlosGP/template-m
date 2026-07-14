@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Izertis Maestro Template — Guía</title>
+  <style>
+    :root {
+      --bg: #f6f6f6;
+      --surface: #fff;
+      --border: #e4e4e4;
+      --text: #141414;
+      --muted: #5c5c5c;
+      --faint: #8a8a8a;
+      --accent: #3685bf;
+      --success: #2d8a4e;
+      --success-bg: #e8f5ec;
+      --warning: #b86e00;
+      --warning-bg: #fff4e0;
+      --info: #3685bf;
+      --info-bg: #e8f2fa;
+      --code-bg: #efefef;
+      --radius: 8px;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
+    h1 { font-size: 1.75rem; margin: 0.5rem 0 0; font-weight: 600; }
+    h2 { font-size: 1.15rem; margin: 0 0 12px; font-weight: 600; }
+    h3 { font-size: 1rem; margin: 0 0 12px; font-weight: 600; }
+    .section { margin-top: 28px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+    }
+    .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .pill.tag { border-radius: 6px; }
+    .pill.success { background: var(--success-bg); color: var(--success); border-color: transparent; }
+    .pill.warning { background: var(--warning-bg); color: var(--warning); border-color: transparent; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      text-align: center;
+    }
+    .stat .value { font-size: 1.25rem; font-weight: 600; }
+    .stat .label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .stat.success .value { color: var(--success); }
+    .stat.info .value { color: var(--info); }
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .flow-item { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .flow-arrow { color: var(--faint); flex-shrink: 0; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex: 1;
+      min-width: 0;
+    }
+    .card.pad { padding: 14px; }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .card-body { padding: 14px; }
+    .card.center { text-align: center; }
+    .card-title { font-weight: 600; margin-bottom: 6px; }
+    code, .code {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      word-break: break-word;
+    }
+    .muted { color: var(--muted); font-size: 0.85rem; }
+    .faint { color: var(--faint); font-size: 0.85rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+    .swatch {
+      width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+    }
+    .swatch.green { background: var(--success); }
+    .swatch.orange { background: var(--warning); }
+    .swatch.blue { background: #3685bf; }
+    .swatch.purple { background: #7c5cbf; }
+    .row { display: flex; gap: 10px; align-items: flex-start; }
+    .step-list .step { padding: 8px 0; }
+    .step-list .arrow { color: var(--faint); padding-left: 6px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #fafafa; font-weight: 600; font-size: 0.85rem; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #fafafa; }
+    td.dot::before {
+      content: "";
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    tr.tone-success td.dot::before { background: var(--success); }
+    tr.tone-warning td.dot::before { background: var(--warning); }
+    tr.tone-info td.dot::before { background: var(--info); }
+    .tree { padding-left: 0; }
+    .tree .branch { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; }
+    .tree .depth-1 { padding-left: 24px; }
+    .tree .depth-2 { padding-left: 48px; }
+    .tree .depth-3 { padding-left: 72px; }
+    .checklist { list-style: none; padding: 0; margin: 0; }
+    .checklist li {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist input { margin-top: 4px; }
+    @media (max-width: 800px) {
+      .stats, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="pills">
+      <span class="pill active">Onboarding</span>
+      <span class="pill">Maestro + Gherkin</span>
+      <span class="pill">iOS</span>
+      <span class="pill">Android</span>
+    </div>
+    <h1>Izertis Maestro Template</h1>
+
+    <div class="stats">
+      <div class="stat success"><div class="value">npm</div><div class="label">Contrato único</div></div>
+      <div class="stat"><div class="value">1:1</div><div class="label">Paso → flow</div></div>
+      <div class="stat info"><div class="value">LEGO</div><div class="label">Flows reusables</div></div>
+      <div class="stat success"><div class="value">check</div><div class="label">Sin device en CI</div></div>
+    </div>
+
+    <section class="section">
+      <h2>Pipeline</h2>
+      <div class="flow">
+        <div class="flow-item">
+          <div class="card pad center"><div class="card-title">features</div><code>.feature</code></div>
+          <span class="flow-arrow">→</span>
+        </div>
+        <div class="flow-item">
+          <div class="card pad center"><div class="card-title">runner</div><code>gherkin-runner</code></div>
+          <span class="flow-arrow">→</span>
+        </div>
+        <div class="flow-item">
+          <div class="card pad center"><div class="card-title">step-defs</div><code>*.json</code></div>
+          <span class="flow-arrow">→</span>
+        </div>
+        <div class="flow-item">
+          <div class="card pad center"><div class="card-title">flows</div><code>*.yml</code></div>
+          <span class="flow-arrow">→</span>
+        </div>
+        <div class="flow-item">
+          <div class="card pad center"><div class="card-title">device</div><code>Maestro</code></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Dos modos de trabajo</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">Editar y validar <span class="pill success">Sin device</span></div>
+          <div class="card-body">
+            <div class="row">
+              <span class="swatch green"></span>
+              <div>
+                <code>npm run check</code>
+                <p class="muted">un solo comando — engloba las 3 fases de abajo</p>
+              </div>
+            </div>
+            <hr class="divider" />
+            <p class="muted">Fases que verás en terminal (check las lanza solo; usa npm run … solo para depurar):</p>
+            <div class="step-list">
+              <div class="step row">
+                <span class="faint">1.</span>
+                <div><code>=== npm test ===</code><br /><span class="muted">equivale a npm test</span></div>
+              </div>
+              <div class="step row">
+                <span class="faint">2.</span>
+                <div><code>=== validate ===</code><br /><span class="muted">equivale a npm run validate</span></div>
+              </div>
+              <div class="step row">
+                <span class="faint">3.</span>
+                <div><code>=== gherkin-extract ===</code><br /><span class="muted">equivale a npm run gherkin-extract</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Correr en dispositivo <span class="pill warning">Con device</span></div>
+          <div class="card-body step-list">
+            <div class="step row">
+              <span class="swatch orange"></span>
+              <div><code>npm run doctor</code><br /><span class="muted">Maestro, adb, PAT, .env</span></div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="step row">
+              <span class="swatch orange"></span>
+              <div><code>npm run feature</code><br /><span class="muted">gherkin-runner → maestro test × paso</span></div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="step row">
+              <span class="swatch orange"></span>
+              <div><code>—no-publish</code><br /><span class="muted">omite publicar en Azure DevOps</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Comandos</h2>
+      <table>
+        <thead><tr><th>Comando</th><th>Qué hace</th><th>Dispositivo</th></tr></thead>
+        <tbody>
+          <tr class="tone-success"><td class="dot"><code>npm run setup</code></td><td>Bootstrap inicial</td><td>No</td></tr>
+          <tr class="tone-success"><td class="dot"><code>npm run check</code></td><td>Gate CI (test + validate + extract)</td><td>No</td></tr>
+          <tr class="tone-success"><td class="dot"><code>npm run test</code></td><td>Solo tests unitarios</td><td>No</td></tr>
+          <tr class="tone-success"><td class="dot"><code>npm run validate</code></td><td>Solo validación estática</td><td>No</td></tr>
+          <tr class="tone-success"><td class="dot"><code>npm run gherkin-extract</code></td><td>Solo diccionario Gherkin</td><td>No</td></tr>
+          <tr class="tone-info"><td class="dot"><code>npm run doctor</code></td><td>Preflight antes de correr tests</td><td>Opcional</td></tr>
+          <tr class="tone-warning"><td class="dot"><code>npm run feature</code></td><td>E2E Gherkin completo</td><td>Sí</td></tr>
+          <tr class="tone-warning"><td class="dot"><code>npm run flow:*</code></td><td>Un flow Maestro aislado</td><td>Sí</td></tr>
+          <tr class="tone-success"><td class="dot"><code>npm run gherkin-report</code></td><td>UI del diccionario</td><td>No</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Un paso Gherkin, varios YAML</h2>
+      <div class="card">
+        <div class="card-body">
+          <p class="muted">Ejemplo: <code>Cuando incremento el contador 3 veces</code></p>
+          <hr class="divider" />
+          <div class="tree">
+            <div class="branch depth-0"><span class="swatch blue"></span><div><code>step-definitions/appium-practice.json</code><br /><span class="muted">pattern → CounterIncrement</span></div></div>
+            <div class="branch depth-1"><span class="swatch purple"></span><div><code>flows/CounterIncrement.yml</code><br /><span class="muted">entry: runFlow shared</span></div></div>
+            <div class="branch depth-2"><span class="swatch green"></span><div><code>shared/CounterIncrement.yml</code><br /><span class="muted">when platform → rama</span></div></div>
+            <div class="branch depth-3"><span class="swatch orange"></span><div><code>android/CounterIncrement.yml</code><br /><span class="muted">tap + assert en device</span></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Estructura maestro/</h2>
+      <table>
+        <thead><tr><th>Carpeta</th><th>Qué es</th><th>Ejemplo</th></tr></thead>
+        <tbody>
+          <tr><td><code>maestro/features/</code></td><td>Escenarios Gherkin</td><td>AppiumPracticeCounter.feature</td></tr>
+          <tr><td><code>maestro/step-definitions/</code></td><td>Paso → flow</td><td>appium-practice.json</td></tr>
+          <tr><td><code>maestro/flows/</code></td><td>Entrada por nombre</td><td>CounterIncrement.yml</td></tr>
+          <tr><td><code>maestro/shared/</code></td><td>Lógica común</td><td>CounterIncrement.yml</td></tr>
+          <tr><td><code>maestro/android/</code></td><td>Selectores Android</td><td>CounterIncrement.yml</td></tr>
+          <tr><td><code>maestro/ios/</code></td><td>Selectores iOS</td><td>DemoLogin.yml</td></tr>
+          <tr><td><code>maestro/scripts/</code></td><td>Runner y validación</td><td>gherkin-runner.js</td></tr>
+          <tr><td><code>e2e-specs/specs/</code></td><td>Spec manual → auto</td><td>manual-counter.md</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section grid-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="row"><span class="swatch blue"></span><strong>Expand Bank</strong></div>
+          <p><code>feature:expand-bank-login</code></p>
+          <span class="pill tag">Login</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="row"><span class="swatch blue"></span><strong>Counter</strong></div>
+          <p><code>feature:counter</code></p>
+          <span class="pill tag">UI state</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="row"><span class="swatch blue"></span><strong>WebView</strong></div>
+          <p><code>feature:webview</code></p>
+          <span class="pill tag">Navegación</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Agente (opcional)</h2>
+      <p class="muted">Flujo desde una issue hasta test verde · <code>docs/agent/workflow.md</code></p>
+      <div class="flow">
+        <div class="flow-item"><div class="card pad center"><div class="card-title">issue</div><code>HU / #id</code></div><span class="flow-arrow">→</span></div>
+        <div class="flow-item"><div class="card pad center"><div class="card-title">scout</div><code>environment-scout</code></div><span class="flow-arrow">→</span></div>
+        <div class="flow-item"><div class="card pad center"><div class="card-title">plan</div><code>e2e-spec</code></div><span class="flow-arrow">→</span></div>
+        <div class="flow-item"><div class="card pad center"><div class="card-title">OK</div><code>usuario</code></div><span class="flow-arrow">→</span></div>
+        <div class="flow-item"><div class="card pad center"><div class="card-title">author</div><code>maestro/**</code></div><span class="flow-arrow">→</span></div>
+        <div class="flow-item"><div class="card pad center"><div class="card-title">run</div><code>npm run feature</code></div><span class="flow-arrow">→</span></div>
+        <div class="flow-item"><div class="card pad center"><div class="card-title">sanity</div><code>sanity-reviewer</code></div><span class="flow-arrow">→</span></div>
+        <div class="flow-item"><div class="card pad center"><div class="card-title">close</div><code>spec verde</code></div></div>
+      </div>
+    </section>
+
+    <section class="section grid-2">
+      <div>
+        <h3>Docs</h3>
+        <table>
+          <thead><tr><th>Archivo</th><th>Tema</th></tr></thead>
+          <tbody>
+            <tr><td><code>README.md</code></td><td>Overview</td></tr>
+            <tr><td><code>AGENTS.md</code></td><td>Convenciones</td></tr>
+            <tr><td><code>docs/guia-framework-maestro.html</code></td><td>Guía visual onboarding</td></tr>
+            <tr><td><code>docs/agent/workflow.md</code></td><td>Issue → test</td></tr>
+            <tr><td><code>docs/DEVICE.md</code></td><td>Dispositivo</td></tr>
+            <tr><td><code>docs/CI.md</code></td><td>Pipeline</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-header">Checklist primer día</div>
+        <div class="card-body">
+          <ul class="checklist">
+            <li><input type="checkbox" disabled /><span><code>.env.example</code> → <code>.env</code></span></li>
+            <li><input type="checkbox" disabled /><span><code>npm run setup &amp;&amp; npm run check</code></span></li>
+            <li><input type="checkbox" disabled /><span>Dispositivo + app instalada</span></li>
+            <li><input type="checkbox" disabled /><span><code>npm run doctor</code></span></li>
+            <li><input type="checkbox" disabled /><span><code>npm run feature … --no-publish</code></span></li>
+            <li><input type="checkbox" disabled /><span>Fork: tus features</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+appId: ${APP_ID}
+name: AssertWebViewText
+---
+- runFlow:
+    when:
+      platform: Android
+    file: ../android/AssertWebViewText.yml

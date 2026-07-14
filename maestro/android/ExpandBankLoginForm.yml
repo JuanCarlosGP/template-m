@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+name: ExpandBankLoginForm
+---
+- tapOn: '${SECTION}'
+- tapOn:
+    id: 'com.expandtesting.practice:id/usernameTextField'
+- inputText: '${USERNAME}'
+- tapOn:
+    id: 'com.expandtesting.practice:id/passwordTextField'
+- inputText: '${PASSWORD}'
+- tapOn:
+    id: 'com.expandtesting.practice:id/loginButton'

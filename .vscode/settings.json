@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "*.feature": "feature"
+  },
+  "cucumber.features": ["__disabled__/**/*.feature"],
+  "cucumber.glue": ["__disabled__/**/*.js"]
+}

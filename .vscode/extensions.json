@@ -1,0 +1,4 @@
+{
+  "recommendations": ["stevejpurves.cucumber"],
+  "unwantedRecommendations": ["CucumberOpen.cucumber-official"]
+}
