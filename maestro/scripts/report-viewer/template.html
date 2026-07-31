@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maestro run report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper: #ebe6dc;
+      --paper-deep: #ddd6c8;
+      --ink: #152238;
+      --ink-soft: #3d4a63;
+      --mute: #6b7589;
+      --line: #c5bdb0;
+      --grid: rgba(21, 34, 56, 0.06);
+      --pass: #0f7a5f;
+      --pass-wash: #d8efe6;
+      --fail: #c0392b;
+      --fail-wash: #f6ddd9;
+      --skip: #7a6f5c;
+      --skip-wash: #ebe4d6;
+      --signal: #1f6f8b;
+      --signal-glow: rgba(31, 111, 139, 0.35);
+      --card: #f7f3ea;
+      --shadow: 0 18px 40px rgba(21, 34, 56, 0.08);
+      --radius: 14px;
+      --font-display: "Fraunces", Georgia, serif;
+      --font-body: "Source Sans 3", "Segoe UI", sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html {
+      scroll-behavior: smooth;
+      /* Always reserve the vertical scrollbar lane so centered layout does not jump */
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: var(--font-body);
+      background:
+        linear-gradient(180deg, rgba(235, 230, 220, 0.92), rgba(235, 230, 220, 0.96)),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 23px,
+          var(--grid) 23px,
+          var(--grid) 24px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 23px,
+          var(--grid) 23px,
+          var(--grid) 24px
+        ),
+        var(--paper);
+    }
+
+    .shell {
+      width: min(1120px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2rem 0 4rem;
+    }
+
+    .brand {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem 1.5rem;
+      margin-bottom: 1.75rem;
+      animation: rise 0.7s ease both;
+    }
+    .brand-mark {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--signal);
+    }
+    .brand-meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--mute);
+    }
+
+    .hero {
+      position: relative;
+      overflow: visible;
+      isolation: isolate;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      box-shadow: var(--shadow);
+      padding: 1.75rem 1.75rem 1.5rem;
+      animation: rise 0.8s ease 0.05s both;
+    }
+    /* Soft bar traveling on the hero border itself */
+    .hero-scan {
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      width: calc(100% + 2px);
+      height: calc(100% + 2px);
+      pointer-events: none;
+      z-index: 1;
+      overflow: visible;
+    }
+    .hero-scan-trail,
+    .hero-scan-bar {
+      fill: none;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      opacity: 0;
+      animation: perimeter-scan 1.7s cubic-bezier(0.45, 0, 0.2, 1) 0.22s both;
+    }
+    .hero-scan-trail {
+      stroke: rgba(31, 111, 139, 0.35);
+      stroke-width: 1.5;
+      stroke-dasharray: 18 82;
+      filter: drop-shadow(0 0 2px rgba(31, 111, 139, 0.18));
+    }
+    .hero-scan-bar {
+      stroke: rgba(94, 168, 192, 0.55);
+      stroke-width: 1.25;
+      stroke-dasharray: 8 92;
+      filter: none;
+    }
+    .hero-body {
+      position: relative;
+      z-index: 2;
+    }
+    .hero-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--mute);
+      margin-bottom: 0.55rem;
+    }
+    .verdict {
+      margin: 0;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-style: italic;
+      font-size: clamp(2.8rem, 8vw, 5.2rem);
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+    }
+    .verdict.pass { color: var(--pass); }
+    .verdict.fail { color: var(--fail); }
+    .hero-sub {
+      margin: 1rem 0 0;
+      max-width: 40rem;
+      color: var(--ink-soft);
+      font-size: 1.05rem;
+      line-height: 1.45;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .metric {
+      background: rgba(255, 255, 255, 0.45);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+    }
+    .metric strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.35rem;
+    }
+    .metric span {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mute);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin: 1.75rem 0 1rem;
+      animation: rise 0.8s ease 0.12s both;
+    }
+    .chip {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink-soft);
+      border-radius: 999px;
+      padding: 0.45rem 0.9rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .chip:hover, .chip:focus-visible {
+      border-color: var(--signal);
+      color: var(--ink);
+      outline: none;
+    }
+    .chip[aria-pressed="true"] {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--paper);
+    }
+
+    .suite {
+      margin-top: 0.75rem;
+      animation: rise 0.85s ease 0.16s both;
+    }
+    .suite-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 1.5rem 0 0.75rem;
+    }
+    .suite-head h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+    .suite-head p {
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--mute);
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover { border-color: #b0a696; }
+    .card[open] { box-shadow: var(--shadow); }
+    .card summary {
+      list-style: none;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0.85rem;
+      align-items: center;
+      padding: 1rem 1.1rem;
+    }
+    .card summary::-webkit-details-marker { display: none; }
+    .card summary:focus-visible {
+      outline: 2px solid var(--signal);
+      outline-offset: -2px;
+    }
+    .status-pill {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      padding: 0.28rem 0.55rem;
+      white-space: nowrap;
+    }
+    .status-pill.passed { background: var(--pass-wash); color: var(--pass); }
+    .status-pill.failed { background: var(--fail-wash); color: var(--fail); }
+    .status-pill.skipped,
+    .status-pill.interrupted,
+    .status-pill.pending { background: var(--skip-wash); color: var(--skip); }
+
+    .card-title {
+      margin: 0;
+      font-size: 1.02rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .card-meta {
+      margin: 0.2rem 0 0;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--mute);
+    }
+    .card-time {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .panel {
+      border-top: 1px solid var(--line);
+      padding: 0.85rem 1.1rem 1.15rem;
+      background: rgba(255, 255, 255, 0.28);
+    }
+    .error-box {
+      margin: 0 0 0.9rem;
+      padding: 0.75rem 0.85rem;
+      border-radius: 10px;
+      background: var(--fail-wash);
+      color: var(--fail);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+    }
+
+    .section-label {
+      margin: 0.85rem 0 0.45rem;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--mute);
+    }
+
+    .timeline {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.4rem;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 5.5rem 1fr auto;
+      gap: 0.65rem;
+      align-items: start;
+      padding: 0.55rem 0.65rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid transparent;
+    }
+    .step.failed { border-color: rgba(192, 57, 43, 0.25); background: var(--fail-wash); }
+    .step.skipped, .step.interrupted { opacity: 0.78; }
+    .kw {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--signal);
+      padding-top: 0.15rem;
+    }
+    .step-body { min-width: 0; }
+    .step-text {
+      margin: 0;
+      font-size: 0.92rem;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .step-flow {
+      margin: 0.2rem 0 0;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--mute);
+    }
+    .step-time {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--mute);
+      padding-top: 0.15rem;
+    }
+
+    .empty {
+      margin: 2rem 0;
+      padding: 2rem;
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.35);
+      color: var(--ink-soft);
+    }
+    .empty code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      color: var(--ink);
+    }
+
+    .foot {
+      margin-top: 2rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--mute);
+      letter-spacing: 0.04em;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes perimeter-scan {
+      0% {
+        opacity: 0;
+        stroke-dashoffset: 0;
+      }
+      12% {
+        opacity: 0.55;
+      }
+      85% {
+        opacity: 0.55;
+      }
+      100% {
+        opacity: 0;
+        stroke-dashoffset: -100;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .step { grid-template-columns: 1fr auto; }
+      .kw { grid-column: 1 / -1; }
+    }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 1.25rem, 1120px); padding-top: 1.25rem; }
+      .card summary { grid-template-columns: auto 1fr; }
+      .card-time { grid-column: 2; justify-self: start; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="brand">
+      <div class="brand-mark">Izertis · Maestro run</div>
+      <div class="brand-meta" id="brand-meta"></div>
+    </header>
+
+    <section class="hero" id="hero" aria-live="polite">
+      <svg class="hero-scan" id="hero-scan" aria-hidden="true">
+        <rect class="hero-scan-trail" pathLength="100"></rect>
+        <rect class="hero-scan-bar" pathLength="100"></rect>
+      </svg>
+      <div class="hero-body" id="hero-body"></div>
+    </section>
+    <div class="toolbar" id="filters" hidden>
+      <button type="button" class="chip" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" class="chip" data-filter="failed" aria-pressed="false">Failed</button>
+      <button type="button" class="chip" data-filter="passed" aria-pressed="false">Passed</button>
+    </div>
+    <main id="suites"></main>
+    <p class="foot" id="foot"></p>
+  </div>
+
+  <script id="report-data" type="application/json">%%MAESTRO_REPORT_JSON%%</script>
+  <script>
+    (function () {
+      const raw = document.getElementById("report-data").textContent.trim();
+      let data = null;
+      try {
+        data = raw && !raw.startsWith("%%MAESTRO_REPORT") ? JSON.parse(raw) : null;
+      } catch (err) {
+        data = null;
+      }
+
+      const hero = document.getElementById("hero");
+      const heroBody = document.getElementById("hero-body");
+      const heroScan = document.getElementById("hero-scan");
+      const suitesEl = document.getElementById("suites");
+      const filtersEl = document.getElementById("filters");
+      const brandMeta = document.getElementById("brand-meta");
+      const foot = document.getElementById("foot");
+
+      function layoutHeroScan() {
+        if (!hero || !heroScan) return;
+        // Border-box of the hero (includes the CSS border)
+        const box = hero.getBoundingClientRect();
+        const w = box.width;
+        const h = box.height;
+        if (!w || !h) return;
+        const border = 1;
+        const pad = border / 2;
+        const radius = 18 - pad;
+        heroScan.removeAttribute("width");
+        heroScan.removeAttribute("height");
+        heroScan.setAttribute("viewBox", "0 0 " + w + " " + h);
+        heroScan.setAttribute("preserveAspectRatio", "none");
+        heroScan.querySelectorAll("rect").forEach(function (rect) {
+          rect.setAttribute("x", String(pad));
+          rect.setAttribute("y", String(pad));
+          rect.setAttribute("width", String(Math.max(0, w - pad * 2)));
+          rect.setAttribute("height", String(Math.max(0, h - pad * 2)));
+          rect.setAttribute("rx", String(radius));
+          rect.setAttribute("ry", String(radius));
+        });
+      }
+
+      function bindHeroScan() {
+        layoutHeroScan();
+        requestAnimationFrame(layoutHeroScan);
+        if (typeof ResizeObserver !== "undefined") {
+          const ro = new ResizeObserver(function () {
+            layoutHeroScan();
+          });
+          ro.observe(hero);
+        } else {
+          window.addEventListener("resize", layoutHeroScan);
+        }
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(layoutHeroScan);
+        }
+      }
+
+      function esc(s) {
+        return String(s == null ? "" : s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function fmtDuration(ms) {
+        if (ms == null || Number.isNaN(Number(ms))) return "—";
+        const n = Number(ms);
+        if (n < 1000) return n + " ms";
+        return (n / 1000).toFixed(1) + " s";
+      }
+
+      function fmtWhen(iso) {
+        if (!iso) return "—";
+        try {
+          return new Date(iso).toLocaleString();
+        } catch {
+          return iso;
+        }
+      }
+
+      function stripQuotes(s) {
+        return String(s || "").replace(/^"+|"+$/g, "");
+      }
+
+      if (!data || !Array.isArray(data.platforms)) {
+        heroBody.innerHTML =
+          '<p class="hero-label">Sin datos de run</p>' +
+          '<h1 class="verdict fail">EMPTY</h1>' +
+          '<p class="hero-sub">Ejecuta el runner para generar este informe, o abre el <code>index.html</code> producido en <code>reports/</code> tras <code>npm run feature</code>.</p>';
+        suitesEl.innerHTML =
+          '<div class="empty">No hay <code>summary.json</code> embebido. Vuelve a lanzar los tests.</div>';
+        bindHeroScan();
+        return;
+      }
+
+      const passed = data.passed ?? data.stats?.expected ?? 0;
+      const failed = data.failed ?? data.stats?.unexpected ?? 0;
+      const ok = failed === 0 && passed >= 0;
+      const duration = data.durationMs ?? data.stats?.duration;
+      const config = data.config || {};
+
+      brandMeta.textContent = [
+        data.template || "izertis-maestro-template",
+        "v" + (data.version || "?"),
+        config.executor || "local",
+        config.environment || "staging",
+      ].join(" · ");
+
+      heroBody.innerHTML =
+        '<p class="hero-label">Resultado de la ejecución</p>' +
+        '<h1 class="verdict ' + (ok ? "pass" : "fail") + '">' + (ok ? "PASSED" : "FAILED") + "</h1>" +
+        '<p class="hero-sub">' +
+          (ok
+            ? "Todos los scenarios terminaron en verde. Revisa tiempos y steps si quieres calibrar flakiness."
+            : "Hay scenarios en rojo. Abre las tarjetas fallidas para ver el step/flow que rompió la run.") +
+        "</p>" +
+        '<div class="metrics">' +
+          '<div class="metric"><strong>' + passed + '</strong><span>Passed</span></div>' +
+          '<div class="metric"><strong>' + failed + '</strong><span>Failed</span></div>' +
+          '<div class="metric"><strong>' + fmtDuration(duration) + '</strong><span>Duration</span></div>' +
+          '<div class="metric"><strong>' + esc((config.platforms || data.platforms.map(p => p.name)).join(", ")) + '</strong><span>Platforms</span></div>' +
+        "</div>";
+
+      bindHeroScan();
+
+      filtersEl.hidden = false;
+      let filter = "all";
+
+      function render() {
+        const parts = [];
+        for (const platform of data.platforms) {
+          const results = (platform.results || []).filter((r) => {
+            const status = r.status || (r.ok === false ? "failed" : "passed");
+            if (filter === "all") return true;
+            return status === filter;
+          });
+          if (!results.length) continue;
+
+          const stats = platform.stats || {};
+          parts.push(
+            '<section class="suite">' +
+              '<div class="suite-head">' +
+                "<h2>" + esc(platform.name) + "</h2>" +
+                "<p>" +
+                  (stats.passed ?? results.filter(r => r.status === "passed").length) + " passed · " +
+                  (stats.failed ?? results.filter(r => r.status === "failed").length) + " failed · " +
+                  fmtDuration(stats.duration) +
+                "</p>" +
+              "</div>"
+          );
+
+          for (const r of results) {
+            const status = r.status || "passed";
+            const title = stripQuotes(r.title || r.scenario || "Scenario");
+            const openAttr = status === "failed" ? " open" : "";
+            const steps = Array.isArray(r.steps) ? r.steps : [];
+            const flows = Array.isArray(r.flows) ? r.flows : [];
+            const attachments = Array.isArray(r.attachments) ? r.attachments : [];
+
+            let body = '<div class="panel">';
+            if (r.error) body += '<pre class="error-box">' + esc(r.error) + "</pre>";
+
+            if (steps.length) {
+              body += '<p class="section-label">Gherkin steps</p><ol class="timeline">';
+              for (const s of steps) {
+                const st = s.status || "passed";
+                body +=
+                  '<li class="step ' + esc(st) + '">' +
+                    '<div class="kw">' + esc(s.keyword || "Step") + "</div>" +
+                    '<div class="step-body">' +
+                      '<p class="step-text">' + esc(s.text || s.title || "") + "</p>" +
+                      '<p class="step-flow">' +
+                        (s.flow ? "flow · " + esc(s.flow) : "precondition · sin flow") +
+                        (s.note ? " · " + esc(s.note) : "") +
+                        (st !== "passed" && st !== "skipped" ? " · " + esc(st) : "") +
+                      "</p>" +
+                    "</div>" +
+                    '<div class="step-time">' + fmtDuration(s.durationMs) + "</div>" +
+                  "</li>";
+              }
+              body += "</ol>";
+            }
+
+            if (flows.length) {
+              body += '<p class="section-label">Maestro flows</p><ol class="timeline">';
+              for (const f of flows) {
+                const st = f.status || "passed";
+                const params = f.params && Object.keys(f.params).length
+                  ? " · " + Object.entries(f.params).map(([k, v]) => k + "=" + v).join(", ")
+                  : "";
+                body +=
+                  '<li class="step ' + esc(st) + '">' +
+                    '<div class="kw">flow</div>' +
+                    '<div class="step-body">' +
+                      '<p class="step-text">' + esc(f.title || f.flow) + "</p>" +
+                      '<p class="step-flow">' + esc(st) + esc(params) + "</p>" +
+                      (f.error ? '<p class="step-flow">' + esc(f.error) + "</p>" : "") +
+                    "</div>" +
+                    '<div class="step-time">' + fmtDuration(f.durationMs) + "</div>" +
+                  "</li>";
+              }
+              body += "</ol>";
+            }
+
+            if (!steps.length && !flows.length) {
+              body += '<p class="section-label">Detalle</p><p class="card-meta">Este run no incluye steps/flows enriquecidos. Vuelve a ejecutar con el reporter actual.</p>';
+            }
+
+            if (attachments.length) {
+              body += '<p class="section-label">Attachments</p><ul class="timeline">';
+              for (const a of attachments) {
+                body += '<li class="step"><div class="kw">file</div><div class="step-body"><p class="step-text">' + esc(a.name || "attachment") + '</p><p class="step-flow">' + esc(a.path || "") + "</p></div></li>";
+              }
+              body += "</ul>";
+            }
+
+            body += "</div>";
+
+            parts.push(
+              "<details class=\"card\" data-status=\"" + esc(status) + "\"" + openAttr + ">" +
+                "<summary>" +
+                  '<span class="status-pill ' + esc(status) + '">' + esc(status) + "</span>" +
+                  "<div>" +
+                    '<p class="card-title">' + esc(title) + "</p>" +
+                    '<p class="card-meta">' + esc(r.featureFile || r.file || platform.name) +
+                      (r.file && r.featureFile ? " · " + esc(r.file) : "") +
+                    "</p>" +
+                  "</div>" +
+                  '<div class="card-time">' + fmtDuration(r.durationMs) + "</div>" +
+                "</summary>" +
+                body +
+              "</details>"
+            );
+          }
+          parts.push("</section>");
+        }
+
+        suitesEl.innerHTML = parts.length
+          ? parts.join("")
+          : '<div class="empty">No hay scenarios con el filtro seleccionado.</div>';
+      }
+
+      filtersEl.addEventListener("click", (ev) => {
+        const btn = ev.target.closest("[data-filter]");
+        if (!btn) return;
+        filter = btn.getAttribute("data-filter");
+        for (const b of filtersEl.querySelectorAll("[data-filter]")) {
+          b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+        }
+        render();
+      });
+
+      foot.textContent =
+        "Generated " + fmtWhen(data.finishedAt || data.stats?.startTime) +
+        " · wall " + fmtDuration(duration) +
+        " · source summary.json";
+
+      render();
+    })();
+  </script>
+</body>
+</html>

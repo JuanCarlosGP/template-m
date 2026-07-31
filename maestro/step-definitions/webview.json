@@ -1,0 +1,10 @@
+{
+  "steps": [
+    {
+      "pattern": "navego a la URL \"(.+)\"",
+      "flow": "WebViewNavigateUrl",
+      "params": ["URL"],
+      "description": "Enter an HTTPS URL in the WebView form and tap Go To Site"
+    }
+  ]
+}

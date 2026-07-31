@@ -1,0 +1,21 @@
+appId: ${APP_ID}
+name: TapSauceLabsWebsiteLink
+---
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/webTV"
+# Cold AVDs / CI: Chrome first-run blocks saucelabs.com. optional = no-op on set-up devices.
+- tapOn:
+    text: "Accept & continue"
+    optional: true
+- tapOn:
+    text: "No thanks"
+    optional: true
+- tapOn:
+    text: "Use without an account"
+    optional: true
+- tapOn:
+    text: "Got it"
+    optional: true
+- extendedWaitUntil:
+    visible: "Verify AI-generated code at the pace it's written."
+    timeout: 35000

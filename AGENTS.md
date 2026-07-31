@@ -13,7 +13,7 @@ Optional AI playbooks live in [`docs/agent/`](docs/agent/README.md). End-to-end 
 ```
 features ──► gherkin-runner.js ──► step-definitions/ ──► flows/*.yml ──► device
                   │
-                  └──► reports/summary.json + junit.xml
+                  └──► reports/summary.json + junit.xml + index.html
 ```
 
 **Optional — Azure Test Plans publish** (omit `--no-publish` and configure `.env`):
@@ -44,17 +44,18 @@ ticket → environment-scout → test-planner → e2e-specs/specs/<id>.md → au
 
 Specs: [`e2e-specs/`](e2e-specs/README.md). Orchestration: [`docs/agent/workflow.md`](docs/agent/workflow.md).
 
-## Example scenario (Appium Practice)
+## Example app (Sauce Labs My Demo App)
 
-| Feature | Pattern |
-| ------- | ------- |
-| `AppiumPracticeExpandBank.feature` | Android login in **12 EXPAND BANK**; parameterized Gherkin → `ExpandBankLoginForm` |
+Target Android app: **[My Demo App](https://github.com/saucelabs/my-demo-app-android)** (`com.saucelabs.mydemoapp.android`).
+Step-defs are split by area so the template shows how to scale: `common.json` (shared),
+`auth.json`, `webview.json`, `about.json`. `index.js` merges every `*.json` automatically.
 
 After fork, add tests for your app using the same layout — see [README § Tras crear tu proyecto](README.md#tras-crear-tu-proyecto).
 
 ## Conventions
 
-- **One JSON per feature area** in `step-definitions/` (e.g. `appium-practice.json`).
+- **One JSON per feature area** in `step-definitions/` (e.g. `auth.json`, `webview.json`).
+  Put shared steps (`OpenApp`, assertions, navigation) in `common.json`.
   Add a new file for a new area — do not bloat existing ones.
 - **Longest matching pattern wins.** Among all step definitions that match a Gherkin step,
   the runner picks the one with the longest `pattern`. Files load alphabetically, but array
@@ -83,10 +84,10 @@ After fork, add tests for your app using the same layout — see [README § Tras
 npm run setup                                              # bootstrap (env + deps + Maestro + doctor)
 npm run check                                              # headless CI gate (test + validate + gherkin-extract)
 npm run validate                                           # static check, no device needed
-npm run doctor                                             # preflight: deps, Maestro, devices, PAT
-npm run feature:expand-bank-login                          # example (Android, no publish)
+npm run doctor                                             # preflight: deps, Maestro, devices (soft), PAT
+npm run doctor:device                                      # agent gate: fail if no device connected
 npm run feature -- --feature maestro/features/<Area>.feature --platform android --no-publish
-npm run flow:android -- --flow maestro/flows/<Flow>.yml    # direct flow, no runner
+npm run flow:android -- --flow maestro/flows/OpenApp.yml   # direct flow, no runner
 npm run gherkin-report                                     # Gherkin dictionary UI
 ```
 

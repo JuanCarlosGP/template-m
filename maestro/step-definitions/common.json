@@ -1,0 +1,21 @@
+{
+  "steps": [
+    {
+      "pattern": "abro My Demo App en la pantalla principal",
+      "flow": "OpenApp",
+      "description": "Launch Sauce Labs My Demo App with clear app state"
+    },
+    {
+      "pattern": "abro el menú y pulso \"(.+)\"",
+      "flow": "TapMenuItem",
+      "params": ["MENU_ITEM"],
+      "description": "Open the side menu (hamburger) then tap a labeled drawer item"
+    },
+    {
+      "pattern": "veo el texto \"(.+)\"",
+      "flow": "AssertVisibleText",
+      "params": ["TEXT"],
+      "description": "Assert that the given text is visible on screen"
+    }
+  ]
+}

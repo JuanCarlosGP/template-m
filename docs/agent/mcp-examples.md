@@ -48,7 +48,7 @@ Keep **`maestro`** for live-device work. For tickets and Gherkin, enable **exact
 | `github` | Issues / PRs on GitHub.com or GitHub Enterprise |
 | `gitlab` | Issues / MRs on GitLab.com or self-managed |
 
-Cursor loads every server in `.mcp.json` at startup — unused or misconfigured servers cause noise and slow context.
+Your IDE loads every server in `.mcp.json` at startup — unused or misconfigured servers cause noise and slow context.
 
 ---
 
@@ -83,7 +83,7 @@ Official server: [github/github-mcp-server](https://github.com/github/github-mcp
 
 ### Option A — Remote HTTP (recommended)
 
-Requires Cursor with HTTP MCP support. Create a [fine-grained or classic PAT](https://github.com/settings/tokens) with `repo` (and `read:org` if needed). Store it in your environment as `GITHUB_TOKEN` — **never commit tokens**.
+Requires an IDE with HTTP MCP support. Create a [fine-grained or classic PAT](https://github.com/settings/tokens) with `repo` (and `read:org` if needed). Store it in your environment as `GITHUB_TOKEN` — **never commit tokens**.
 
 ```json
 "github": {
@@ -127,7 +127,7 @@ Official server: [GitLab MCP docs](https://docs.gitlab.com/user/gitlab_duo/model
 
 Replace `gitlab.com` with your instance hostname on self-managed.
 
-### HTTP (recommended for Cursor)
+### HTTP (recommended when the IDE supports HTTP MCP)
 
 ```json
 "gitlab": {
@@ -136,7 +136,7 @@ Replace `gitlab.com` with your instance hostname on self-managed.
 }
 ```
 
-On first use, Cursor opens a browser for OAuth approval.
+On first use, the IDE typically opens a browser for OAuth approval.
 
 ### stdio via `mcp-remote` (alternative)
 

@@ -1,0 +1,6 @@
+appId: ${APP_ID}
+name: TapMenuItem
+---
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/menuIV"
+- tapOn: ${MENU_ITEM}

@@ -37,10 +37,14 @@ describe('validate-step-defs', () => {
     assert.ok(problems.some(p => p.includes('capture group')))
   })
 
-  it('validates appium-practice.json', () => {
-    const filePath = path.join(__dirname, '..', '..', 'step-definitions', 'appium-practice.json')
-    const problems = validateStepDefinitionsFile(filePath)
-    assert.deepEqual(problems, [])
+  it('validates all step-definition JSON files', () => {
+    const dir = path.join(__dirname, '..', '..', 'step-definitions')
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.json') && f !== 'schema.json')
+    assert.ok(files.length > 0)
+    for (const file of files) {
+      const problems = validateStepDefinitionsFile(path.join(dir, file))
+      assert.deepEqual(problems, [], file)
+    }
   })
 
   it('invalid temp file fails validation', () => {
@@ -57,51 +61,50 @@ describe('validate-step-defs', () => {
   })
 })
 
-describe('appium-practice step patterns', () => {
-  const loginStep =
-    'entro en "12 EXPAND BANK" e inicio sesión con usuario "practice" y clave "practice"'
+describe('demo step patterns (common / auth / webview / about)', () => {
+  it('matches open app step', () => {
+    const resolved = resolveStep('abro My Demo App en la pantalla principal')
+    assert.equal(resolved.flow, 'OpenApp')
+  })
 
-  it('matches parameterized expand bank login step', () => {
-    const resolved = resolveStep(loginStep)
-    assert.equal(resolved.flow, 'ExpandBankLoginForm')
-    assert.equal(resolved.params.SECTION, '12 EXPAND BANK')
-    assert.equal(resolved.params.USERNAME, 'practice')
-    assert.equal(resolved.params.PASSWORD, 'practice')
+  it('matches assert visible text step', () => {
+    const resolved = resolveStep('veo el texto "Products"')
+    assert.equal(resolved.flow, 'AssertVisibleText')
+    assert.equal(resolved.params.TEXT, 'Products')
+  })
+
+  it('matches open menu and tap item step', () => {
+    const resolved = resolveStep('abro el menú y pulso "Log In"')
+    assert.equal(resolved.flow, 'TapMenuItem')
+    assert.equal(resolved.params.MENU_ITEM, 'Log In')
+  })
+
+  it('does not match the old shorter menu wording', () => {
+    assert.equal(resolveStepSafe('pulso "Log In" en el menú'), null)
+  })
+
+  it('matches login with credentials step', () => {
+    const resolved = resolveStep('inicio sesión con usuario "bod@example.com" y contraseña "10203040"')
+    assert.equal(resolved.flow, 'LoginWithCredentials')
+    assert.equal(resolved.params.USERNAME, 'bod@example.com')
+    assert.equal(resolved.params.PASSWORD, '10203040')
+  })
+
+  it('matches confirm logout dialog step', () => {
+    assert.equal(resolveStep('confirmo el logout en el diálogo').flow, 'ConfirmLogoutDialog')
+  })
+
+  it('matches navigate to URL step', () => {
+    const resolved = resolveStep('navego a la URL "https://www.wikipedia.org"')
+    assert.equal(resolved.flow, 'WebViewNavigateUrl')
+    assert.equal(resolved.params.URL, 'https://www.wikipedia.org')
+  })
+
+  it('matches Sauce Labs website link step', () => {
+    assert.equal(resolveStep('pulso el enlace al sitio de Sauce Labs').flow, 'TapSauceLabsWebsiteLink')
   })
 
   it('does not match unrelated text', () => {
     assert.equal(resolveStepSafe('inicio sesión sin credenciales'), null)
-  })
-
-  it('matches counter section navigation step', () => {
-    const resolved = resolveStep('entro en "01 COUNTER"')
-    assert.equal(resolved.flow, 'TapAppSection')
-    assert.equal(resolved.params.SECTION, '01 COUNTER')
-  })
-
-  it('matches counter increment step with vez/veces', () => {
-    const once = resolveStep('pulso incrementar 1 vez')
-    assert.equal(once.flow, 'CounterIncrement')
-    assert.equal(once.params.TIMES, '1')
-
-    const thrice = resolveStep('pulso incrementar 3 veces')
-    assert.equal(thrice.flow, 'CounterIncrement')
-    assert.equal(thrice.params.TIMES, '3')
-
-    const dec = resolveStep('pulso decrementar 1 vez')
-    assert.equal(dec.flow, 'CounterDecrement')
-    assert.equal(dec.params.TIMES, '1')
-  })
-
-  it('matches webview navigation and assert steps', () => {
-    const nav = resolveStep('navego en el WebView a "https://en.wikipedia.org/wiki/Main_Page"')
-    assert.equal(nav.flow, 'WebViewNavigateUrl')
-    assert.equal(nav.params.URL, 'https://en.wikipedia.org/wiki/Main_Page')
-
-    const assertWeb = resolveStep('en el WebView veo el texto "Welcome to Wikipedia"')
-    assert.equal(assertWeb.flow, 'AssertWebViewText')
-    assert.equal(assertWeb.params.TEXT, 'Welcome to Wikipedia')
-
-    assert.equal(resolveStep('pulso clear del WebView').flow, 'WebViewClear')
   })
 })

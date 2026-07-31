@@ -1,5 +1,5 @@
 appId: ${APP_ID}
-name: ExpandBankOpenApp
+name: OpenApp
 ---
 - launchApp:
     clearState: true

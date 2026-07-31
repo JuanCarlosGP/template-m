@@ -36,4 +36,4 @@ Entry: [`docs/agent/author-e2e-test/SKILL.md`](../docs/agent/author-e2e-test/SKI
 | Sanity (post-ejecución) | sanity-reviewer (after green run) |
 | Gate / Resultado | author-e2e-test |
 
-See [specs/manual-expand-bank-login.md](specs/manual-expand-bank-login.md). Content in **Spanish**; use `(ninguno)` for empty sections.
+See specs under `specs/` once you add scenarios. Content in **Spanish**; use `(ninguno)` for empty sections.

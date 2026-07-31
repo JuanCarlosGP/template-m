@@ -13,7 +13,7 @@ The issue → plan → test pipeline ([`docs/agent/workflow.md`](agent/workflow.
 | Step | Requirement |
 |------|-------------|
 | environment-scout | `maestro` MCP + simulator/emulator + app |
-| author-e2e-test (execute) | Same + `npm run doctor` green for target platform |
+| author-e2e-test (execute) | Same + `npm run doctor:device` green (≥1 connected device) |
 | Headless only | `npm run check` — no device |
 
 Install Maestro MCP in [`.mcp.json`](../.mcp.json); TMS optional — [`docs/agent/mcp-examples.md`](agent/mcp-examples.md).
@@ -25,9 +25,9 @@ npm run setup
 npm run check
 npm run validate
 npm run doctor
-npm run feature:expand-bank-login
-npm run feature -- --feature maestro/features/AppiumPracticeExpandBank.feature --platform android --no-publish
-npm run flow:android -- --flow maestro/flows/ExpandBankLoginForm.yml
+npm run doctor:device
+npm run feature -- --feature maestro/features/<Area>.feature --platform android --no-publish
+npm run flow:android -- --flow maestro/flows/OpenApp.yml
 npm run gherkin-extract
 npm run gherkin-report
 ```

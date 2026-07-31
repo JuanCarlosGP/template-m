@@ -8,13 +8,20 @@
 //
 //   HARD (exit 1 if missing): Node deps installed, Maestro CLI, at least one of
 //                             xcrun/adb for the platforms you intend to run.
-//   SOFT (warn only):         AZURE_DEVOPS_PAT, a booted device, APP_SOURCE_DIR.
+//   SOFT (warn only):         AZURE_DEVOPS_PAT, APP_SOURCE_DIR,
+//                             booted device (unless --require-device).
+//
+//   npm run doctor:device  → same checks + HARD fail if Devices has none
+//                            (iOS Booted or Android `device`). Used by agent
+//                            playbooks before environment-scout and authoring.
 
 const { execFileSync, execSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
+const { listConnectedDevices } = require('./lib/doctor-devices')
 
 const ROOT = path.join(__dirname, '..', '..')
+const requireDevice = process.argv.includes('--require-device')
 let hardFailures = 0
 
 function run(cmd) {
@@ -51,6 +58,9 @@ function warn(msg) { console.log(`  \x1b[33m!\x1b[0m ${msg}`) }
 function fail(msg) { console.log(`  \x1b[31m✗\x1b[0m ${msg}`); hardFailures++ }
 
 console.log('Izertis Maestro Template — doctor\n')
+if (requireDevice) {
+  console.log('(mode: --require-device — at least one connected device is mandatory)\n')
+}
 
 // --- Hard requirements --------------------------------------------------------
 console.log('Toolchain:')
@@ -85,12 +95,28 @@ const adb = resolveBinOnPath('adb')
 adb ? ok('adb (Android) available') : warn('adb not found — Android runs unavailable')
 if (!xcrun && !adb) fail('neither xcrun nor adb found — cannot run on any platform')
 
-// --- Devices (informational) --------------------------------------------------
+// --- Devices ------------------------------------------------------------------
 console.log('\nDevices:')
-const booted = (run('xcrun simctl list devices booted') || '').split('\n').filter(l => l.includes('(Booted)'))
-booted.length ? booted.forEach(l => ok(`iOS booted: ${l.trim()}`)) : warn('no iOS simulator booted (start one in Xcode)')
-const droid = (run('adb devices') || '').split('\n').slice(1).filter(l => /\bdevice\b/.test(l))
-droid.length ? ok(`Android: ${droid.length} device(s) connected`) : warn('no Android device/emulator (start one in Android Studio)')
+const devices = listConnectedDevices({ run })
+if (devices.ios.length) {
+  devices.ios.forEach(l => ok(`iOS booted: ${l}`))
+} else if (requireDevice) {
+  // soft wording unless no Android either — final hasAny check below
+  warn('no iOS simulator booted (start one in Xcode)')
+} else {
+  warn('no iOS simulator booted (start one in Xcode)')
+}
+
+if (devices.android.length) {
+  ok(`Android: ${devices.android.length} device(s) connected`)
+} else {
+  warn('no Android device/emulator (start one in Android Studio)')
+}
+
+if (requireDevice && !devices.hasAny) {
+  fail('no device connected — connect an Android device/emulator or boot an iOS simulator, then re-run')
+  console.error('\n  Tip: adb devices -l   |   npm run doctor:device')
+}
 
 // --- Config (soft) ------------------------------------------------------------
 console.log('\nConfig:')

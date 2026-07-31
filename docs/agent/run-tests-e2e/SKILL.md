@@ -43,17 +43,14 @@ npm run validate
 # Preflight (checks toolchain + devices)
 npm run doctor
 
-# Example feature on Android (Appium Practice)
-npm run feature:expand-bank-login
+# Example: launch My Demo App directly
+npm run flow:android -- --flow maestro/flows/OpenApp.yml
 
 # Single feature (generic)
-npm run feature -- --feature maestro/features/AppiumPracticeExpandBank.feature --platform android --no-publish
-
-# Run a Maestro flow directly (bypasses the Gherkin runner)
-npm run flow:android -- --flow maestro/flows/ExpandBankLoginForm.yml
+npm run feature -- --feature maestro/features/<Area>.feature --platform android --no-publish
 ```
 
-Pass `--no-publish` to keep results off Azure (default in `feature:expand-bank-login`).
+Pass `--no-publish` to keep results off Azure.
 
 ## Gotchas
 

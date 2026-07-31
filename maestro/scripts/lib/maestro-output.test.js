@@ -32,11 +32,11 @@ describe('MaestroStepRenderer', () => {
 
     r.frameSteps.push({ indent: 3, marker: '?', label: 'Launch app "${APP_ID}"' })
     r.flushFrame()
-    r.frameSteps.push({ indent: 3, marker: '✓', label: 'Launch app "com.expandtesting.practice"' })
+    r.frameSteps.push({ indent: 3, marker: '✓', label: 'Launch app "com.saucelabs.mydemoapp.android"' })
     const out = r.flushFrame()
 
     assert.equal((out.match(/Launch app/g) || []).length, 1)
-    assert.match(out, /✅   Launch app "com.expandtesting.practice"/)
+    assert.match(out, /✅   Launch app "com.saucelabs.mydemoapp.android"/)
   })
 
   it('transforms Windows fallback box lines with ? borders', () => {
@@ -144,7 +144,7 @@ describe('MaestroStepRenderer', () => {
     let out = r.processLine('Run ../android/DemoOnboarding.yml when Platform is ANDROID...')
     assert.match(out, /⏳   Run \.\.\/android/)
 
-    out = r.processLine('  Launch app "com.expandtesting.practice"...')
+    out = r.processLine('  Launch app "com.saucelabs.mydemoapp.android"...')
     assert.match(out, /⏳   Launch app/)
 
     out = r.processLine('  Assert that "The Practice App" is visible...')

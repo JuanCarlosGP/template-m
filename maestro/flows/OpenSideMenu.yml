@@ -1,7 +1,7 @@
 appId: ${APP_ID}
-name: CounterDecrement
+name: OpenSideMenu
 ---
 - runFlow:
     when:
       platform: Android
-    file: ../android/CounterDecrement.yml
+    file: ../android/OpenSideMenu.yml

@@ -17,12 +17,15 @@ npm run check
 
 | Stack | Copy from | Typical destination |
 |-------|-----------|---------------------|
-| GitHub Actions | [`github-actions/headless.yml`](github-actions/headless.yml) | `.github/workflows/e2e-headless.yml` |
+| GitHub Actions (headless) | [`github-actions/headless.yml`](github-actions/headless.yml) | `.github/workflows/e2e-headless.yml` |
+| GitHub Actions (Android emulator) | [`github-actions/android-emulator.yml`](github-actions/android-emulator.yml) | `.github/workflows/e2e-android-emulator.yml` |
 | Azure Pipelines | [`azure-pipelines/headless.yml`](azure-pipelines/headless.yml) | `azure-pipelines.yml` or a template stage |
 | GitLab CI | [`gitlab-ci/headless.yml`](gitlab-ci/headless.yml) | `.gitlab-ci.yml` or `include:` |
 
 Adjust triggers, branch names, and Node version if needed. Requires **Node 20+** and a committed `package-lock.json` for `npm ci`.
 
-## Device jobs (phase 2)
+## Device jobs
 
-These examples do **not** run Maestro on a simulator/emulator. When you add a device job, see [`docs/CI.md`](../docs/CI.md#device-gate-optional) and publish `reports/junit.xml` + `reports/summary.json` as artifacts.
+- **Headless examples** do not run Maestro on a device.
+- **Android emulator (GitHub-hosted):** [`github-actions/android-emulator.yml`](github-actions/android-emulator.yml) boots an AVD, installs the demo APK, and runs `maestro/features`. This template also keeps a live copy at [`.github/workflows/e2e-android-emulator.yml`](../.github/workflows/e2e-android-emulator.yml) (`schedule` + `workflow_dispatch`). Slow and flaky vs cloud/self-hosted; use for smoke, not as the only production gate.
+- Publish `reports/junit.xml` + `reports/summary.json` (+ `index.html`) as artifacts — see [`docs/CI.md`](../docs/CI.md#device-gate-optional).

@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de pasos — Izertis Maestro Template</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    .hero-gradient {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    }
+    .occurrence-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #e5e7eb;
+      border-radius: 0 2px 2px 0;
+    }
+    .occurrence-item:hover::before {
+      background: #4f46e5;
+    }
+    .card-step-text { font-size: 1.05rem; }
+    .badge-given { background: #2563eb; }
+    .badge-when { background: #d97706; }
+    .badge-then { background: #059669; }
+    .badge-and { background: #6b7280; }
+    .badge-but { background: #dc2626; }
+    .border-given { border-left-color: #2563eb; }
+    .border-when { border-left-color: #d97706; }
+    .border-then { border-left-color: #059669; }
+    .border-and { border-left-color: #6b7280; }
+    .border-but { border-left-color: #dc2626; }
+  </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+  <div id="app"></div>
+
+  <script type="module">
+    import { h, render } from 'https://esm.sh/preact@10.19.3';
+    import { useState, useEffect, useRef } from 'https://esm.sh/preact@10.19.3/hooks';
+    import htm from 'https://esm.sh/htm@3.1.1';
+    const url = './gherkin-extraction.json';
+
+    const ticketLink = 'https://dev.azure.com/your-org/your-project/_workitems/edit/';
+
+    const stepTypeLabels = {
+      given: { display: 'Contexto', short: 'Given', desc: 'Situación inicial' },
+      when:  { display: 'Acción', short: 'When', desc: 'Lo que hace el usuario' },
+      then:  { display: 'Resultado', short: 'Then', desc: 'Lo que se comprueba' },
+      and:   { display: 'Y además', short: 'And', desc: 'Más pasos del mismo tipo' },
+      but:   { display: 'Pero', short: 'But', desc: 'Excepción' }
+    };
+    const typeOrder = ['given', 'when', 'then', 'and', 'but'];
+
+    const html = htm.bind(h);
+
+    const groupStatements = (statements) => {
+      const groups = {};
+      statements.forEach(statement => {
+        const key = `${statement.tipo}-${statement.sentencia}`;
+        if (!groups[key]) {
+          groups[key] = { tipo: statement.tipo, sentencia: statement.sentencia, occurrences: [] };
+        }
+        groups[key].occurrences.push(statement);
+      });
+      return Object.values(groups);
+    };
+
+    const getMostUsedSteps = (statements, limit = 12) => {
+      const counts = new Map();
+      (statements || []).forEach(s => {
+        const key = s.tipo + '|' + s.sentencia;
+        if (!counts.has(key)) counts.set(key, { tipo: s.tipo, sentencia: s.sentencia, count: 0 });
+        counts.get(key).count++;
+      });
+      return [...counts.values()].sort((a, b) => b.count - a.count || a.sentencia.localeCompare(b.sentencia)).slice(0, limit);
+    };
+
+    const formatDate = (timestamp) => {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return date.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) +
+        ' · ' + date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const CONSTRUCTOR_STORAGE_KEY = 'gherkin-constructor-custom-steps';
+
+    const useConstructorCatalog = (allStatements) => {
+      const [catalogSearch, setCatalogSearch] = useState('');
+      const [catalogType, setCatalogType] = useState('all');
+
+      const uniqueCatalogSteps = (() => {
+        const seen = new Set();
+        return (allStatements || [])
+          .filter(s => {
+            const key = s.tipo + '|' + s.sentencia;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            const matchType = catalogType === 'all' || s.tipo.toLowerCase() === catalogType;
+            const term = (catalogSearch || '').toLowerCase();
+            const matchSearch = !term || (s.sentencia && s.sentencia.toLowerCase().includes(term));
+            return matchType && matchSearch;
+          })
+          ;
+      })();
+
+      return {
+        catalogSearch,
+        setCatalogSearch,
+        catalogType,
+        setCatalogType,
+        uniqueCatalogSteps
+      };
+    };
+
+    const useConstructorCustomStep = () => {
+      const [customTipo, setCustomTipo] = useState('Given');
+      const [customText, setCustomText] = useState('');
+      return { customTipo, setCustomTipo, customText, setCustomText };
+    };
+
+    const useConstructorUiState = (customSteps, updateCustomStep) => {
+      const [copied, setCopied] = useState(false);
+      const [editingSavedIndex, setEditingSavedIndex] = useState(null);
+      const [editingSavedName, setEditingSavedName] = useState('');
+      const [showNewConfirm, setShowNewConfirm] = useState(false);
+      const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+      const [duplicateNombre, setDuplicateNombre] = useState('');
+
+      const openEditName = (i) => {
+        const item = customSteps[i];
+        setEditingSavedIndex(i);
+        setEditingSavedName(item && (item.nombre || (item.steps ? (item.scenarioName || item.featureName || '') : (item.tipo + ' ' + (item.sentencia || '')))) || '');
+      };
+
+      const closeEditName = () => { setEditingSavedIndex(null); };
+
+      const saveEditName = () => {
+        if (editingSavedIndex != null && updateCustomStep) {
+          updateCustomStep(editingSavedIndex, { nombre: (editingSavedName || '').trim() || undefined });
+        }
+        setEditingSavedIndex(null);
+      };
+
+      return {
+        copied,
+        setCopied,
+        editingSavedIndex,
+        editingSavedName,
+        setEditingSavedName,
+        showNewConfirm,
+        setShowNewConfirm,
+        showDuplicateDialog,
+        setShowDuplicateDialog,
+        duplicateNombre,
+        setDuplicateNombre,
+        openEditName,
+        closeEditName,
+        saveEditName
+      };
+    };
+
+    const ConstructorDialog = ({ open, onClose, allStatements, steps, setSteps, featureName, setFeatureName, scenarioName, setScenarioName, customSteps, addSavedScenario, removeCustomStep, updateCustomStep }) => {
+      if (!open) return null;
+      const { catalogSearch, setCatalogSearch, catalogType, setCatalogType, uniqueCatalogSteps } = useConstructorCatalog(allStatements);
+      const { customTipo, setCustomTipo, customText, setCustomText } = useConstructorCustomStep();
+      const {
+        copied,
+        setCopied,
+        editingSavedIndex,
+        editingSavedName,
+        setEditingSavedName,
+        showNewConfirm,
+        setShowNewConfirm,
+        showDuplicateDialog,
+        setShowDuplicateDialog,
+        duplicateNombre,
+        setDuplicateNombre,
+        openEditName,
+        closeEditName,
+        saveEditName
+      } = useConstructorUiState(customSteps, updateCustomStep);
+      const stepsListRef = useRef(null);
+      const previewRef = useRef(null);
+
+      useEffect(() => {
+        const id = requestAnimationFrame(() => {
+          if (stepsListRef.current) stepsListRef.current.scrollTop = stepsListRef.current.scrollHeight;
+          if (previewRef.current) previewRef.current.scrollTop = previewRef.current.scrollHeight;
+        });
+        return () => cancelAnimationFrame(id);
+      }, [steps]);
+
+      const mostUsedSteps = getMostUsedSteps(allStatements, 6);
+      const addFromCatalog = (tipo, sentencia) => setSteps([...steps, { tipo, sentencia }]);
+      const removeStep = (i) => setSteps(steps.filter((_, idx) => idx !== i));
+      const addCustom = () => {
+        const text = (customText || '').trim();
+        if (!text) return;
+        setSteps([...steps, { tipo: customTipo, sentencia: text }]);
+        setCustomText('');
+      };
+      const addFromSaved = (tipo, sentencia) => setSteps([...steps, { tipo, sentencia }]);
+      const applySaved = (item) => {
+        if (item.steps && Array.isArray(item.steps)) {
+          setFeatureName(item.featureName || '');
+          setScenarioName(item.scenarioName || '');
+          setSteps([...(item.steps || [])]);
+        } else {
+          setSteps([...steps, { tipo: item.tipo, sentencia: item.sentencia }]);
+        }
+      };
+      const getSavedLabel = (item) => {
+        if (item.nombre) return item.nombre;
+        if (item.steps && item.steps.length) return (item.scenarioName || item.featureName || 'Escenario') + ' (' + item.steps.length + ' pasos)';
+        return (item.tipo || '') + ' ' + (item.sentencia || '');
+      };
+
+      const gherkinLines = [];
+      if (featureName.trim()) gherkinLines.push('Feature: ' + featureName.trim());
+      gherkinLines.push('');
+      if (scenarioName.trim()) gherkinLines.push('  Scenario: ' + scenarioName.trim());
+      steps.forEach(({ tipo, sentencia }) => gherkinLines.push('    ' + tipo + ' ' + sentencia));
+      const gherkinText = gherkinLines.join('\n');
+
+      const doCopy = () => {
+        navigator.clipboard.writeText(gherkinText).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+      };
+
+      const sameSteps = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((s, i) => b[i] && s.tipo === b[i].tipo && s.sentencia === b[i].sentencia);
+      const findDuplicate = (payload) => (customSteps || []).find(item => item.steps && (item.featureName || '') === (payload.featureName || '') && (item.scenarioName || '') === (payload.scenarioName || '') && sameSteps(item.steps, payload.steps));
+      const trySave = (payload) => {
+        const existing = findDuplicate(payload);
+        if (existing) {
+          setDuplicateNombre(existing.nombre || 'Sin nombre');
+          setShowDuplicateDialog(true);
+          return false;
+        }
+        if (addSavedScenario) addSavedScenario(payload);
+        return true;
+      };
+
+      const clearConstructor = () => {
+        setFeatureName('');
+        setScenarioName('');
+        setSteps([]);
+      };
+      const hasContent = !!(featureName.trim() || scenarioName.trim() || steps.length);
+      const onNewClick = () => {
+        if (hasContent) setShowNewConfirm(true);
+        else clearConstructor();
+      };
+      const payloadForSave = () => ({ featureName, scenarioName, steps, nombre: (scenarioName || featureName || 'Escenario').trim() || 'Sin nombre' });
+      const confirmSaveAndNew = () => {
+        if (hasContent && !trySave(payloadForSave())) return;
+        clearConstructor();
+        setShowNewConfirm(false);
+      };
+      const confirmDiscardAndNew = () => {
+        clearConstructor();
+        setShowNewConfirm(false);
+      };
+
+      return html`
+        <div class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 overflow-y-auto" onClick=${onClose} role="dialog" aria-modal="true" aria-label="Constructor Gherkin">
+          <div class="bg-white rounded-2xl shadow-xl w-full max-w-[min(92vw,90rem)] min-h-[64vh] flex flex-col my-auto" onClick=${e => e.stopPropagation()}>
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
+              <h2 class="text-lg font-semibold text-slate-800">Constructor Gherkin ⚒</h2>
+              <div class="flex items-center gap-1">
+                <button type="button" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg inline-flex items-center justify-center" onClick=${onNewClick} aria-label="Nuevo (borrar y empezar)"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+                <button type="button" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100" onClick=${onClose} aria-label="Cerrar">✕</button>
+              </div>
+            </div>
+            <div class="flex-1 min-h-0 px-6 py-5">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mb-5">
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-0.5">Feature (opcional)</label>
+                  <input type="text" class="w-full py-2 px-3 border border-slate-300 rounded-lg text-sm" placeholder="ej. Mi flujo" value=${featureName} onInput=${e => setFeatureName(e.target.value)} />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-0.5">Escenario (opcional)</label>
+                  <input type="text" class="w-full py-2 px-3 border border-slate-300 rounded-lg text-sm" placeholder="ej. Caso feliz" value=${scenarioName} onInput=${e => setScenarioName(e.target.value)} />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                  <h3 class="text-sm font-medium text-slate-700">Pasos del escenario</h3>
+                  <div ref=${stepsListRef} class="space-y-1.5 min-h-[80px] max-h-40 overflow-y-auto">
+                    ${steps.length === 0 && html`<p class="text-sm text-slate-400 py-2">Añade pasos desde la derecha.</p>`}
+                    ${steps.map((s, i) => html`
+                      <div class="flex items-center gap-2 py-1.5 px-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <span class="text-xs font-semibold text-white px-2 py-0.5 rounded shrink-0 ${'badge-' + (s.tipo || '').toLowerCase()}">${stepTypeLabels[(s.tipo || '').toLowerCase()]?.short ?? (s.tipo ? s.tipo.charAt(0).toUpperCase() + s.tipo.slice(1).toLowerCase() : s.tipo)}</span>
+                        <span class="flex-1 text-sm text-slate-800 truncate min-w-0">${s.sentencia}</span>
+                        <button type="button" class="text-slate-400 hover:text-red-600 text-xs shrink-0" onClick=${() => removeStep(i)}>Quitar</button>
+                      </div>
+                    `)}
+                  </div>
+                  <div class="pt-2">
+                    <h3 class="text-sm font-medium text-slate-700 mb-1.5">Vista previa</h3>
+                    <pre ref=${previewRef} class="p-3 bg-slate-900 text-slate-100 text-xs rounded-lg overflow-x-auto max-h-40 overflow-y-auto whitespace-pre-wrap">${gherkinText || ' (vacío)'}</pre>
+                    <div class="mt-1.5 flex flex-wrap gap-2 items-center">
+                      <button type="button" class="py-2 px-4 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700" onClick=${doCopy}>${copied ? 'Copiado' : 'Copiar Gherkin'}</button>
+                      <button type="button" class="py-2 px-4 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled=${steps.length === 0} onClick=${() => trySave({ featureName, scenarioName, steps, nombre: (scenarioName || featureName || 'Escenario').trim() || 'Sin nombre' })} title="Guardar feature, escenario y pasos en Guardados">Guardar</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="space-y-5 border-l border-slate-100 pl-8">
+                  <div>
+                    <h3 class="text-sm font-medium text-slate-700 mb-1.5">Desde catálogo</h3>
+                    <div class="flex gap-2 mb-1.5">
+                      <input type="text" class="flex-1 py-2 px-3 border border-slate-300 rounded-lg text-sm min-w-0" placeholder="Buscar…" value=${catalogSearch} onInput=${e => setCatalogSearch(e.target.value)} />
+                      <select class="py-2 px-3 border border-slate-300 rounded-lg text-sm w-24 shrink-0" value=${catalogType} onInput=${e => setCatalogType(e.target.value)}>
+                        <option value="all">Todos</option>
+                        ${typeOrder.map(t => html`<option value=${t}>${stepTypeLabels[t].short}</option>`)}
+                      </select>
+                    </div>
+                    <div class="max-h-44 overflow-y-auto space-y-0.5 border border-slate-100 rounded-lg p-1.5">
+                      ${uniqueCatalogSteps.map((s, i) => html`
+                        <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 flex items-center gap-2" onClick=${() => addFromCatalog(s.tipo, s.sentencia)}>
+                          <span class="text-xs font-semibold text-slate-500 shrink-0 w-12">${s.tipo}</span>
+                          <span class="text-sm text-slate-700 truncate min-w-0">${s.sentencia}</span>
+                        </button>
+                      `)}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-medium text-slate-700 mb-1.5">Paso personalizado</h3>
+                    <div class="flex gap-2 flex-wrap items-center">
+                      <select class="py-2 px-3 border border-slate-300 rounded-lg text-sm w-24" value=${customTipo} onInput=${e => setCustomTipo(e.target.value)}>
+                        ${typeOrder.map(t => html`<option value=${t}>${stepTypeLabels[t].short}</option>`)}
+                      </select>
+                      <input type="text" class="flex-1 min-w-[140px] py-2 px-3 border border-slate-300 rounded-lg text-sm" placeholder="ej. el usuario introduce la fecha" value=${customText} onInput=${e => setCustomText(e.target.value)} onKeyDown=${e => e.key === 'Enter' && addCustom()} />
+                      <button type="button" class="py-2 px-4 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 shrink-0" onClick=${addCustom}>Añadir</button>
+                    </div>
+                    ${customSteps.length > 0 && html`
+                      <p class="text-xs text-slate-500 mt-1.5 mb-1">Guardados:</p>
+                      <div class="flex flex-wrap gap-1.5">
+                        ${customSteps.map((s, i) => html`
+                          <span class="inline-flex items-center gap-0.5 rounded bg-slate-100 text-slate-700 max-w-[220px] group">
+                            <button type="button" class="text-xs px-2 py-1 truncate text-left hover:bg-slate-200 rounded-l flex-1 min-w-0" title=${s.steps ? (s.featureName || '') + ' / ' + (s.scenarioName || '') + ' (' + (s.steps && s.steps.length) + ' pasos)' : (s.tipo + ' ' + s.sentencia)} onClick=${() => applySaved(s)}>${getSavedLabel(s)}</button>
+                            <button type="button" class="text-slate-400 hover:text-indigo-600 hover:bg-slate-200 p-1 shrink-0 inline-flex items-center justify-center" onClick=${e => { e.stopPropagation(); openEditName(i); }} aria-label="Editar nombre"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button>
+                            <button type="button" class="text-slate-400 hover:text-red-600 hover:bg-slate-200 p-1 rounded-r shrink-0 inline-flex items-center justify-center" onClick=${e => { e.stopPropagation(); removeCustomStep && removeCustomStep(i); }} aria-label="Eliminar de guardados"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+                          </span>
+                        `)}
+                      </div>
+                    `}
+                  </div>
+                </div>
+              </div>
+              ${mostUsedSteps.length > 0 && html`
+                <div class="mt-6 pt-5 border-t border-slate-200">
+                  <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2.5">
+                    <h3 class="text-sm font-medium text-slate-700">Pasos más usados</h3>
+                    <span class="text-xs text-slate-400">Pulsa para añadir al escenario</span>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    ${mostUsedSteps.map((s, i) => html`
+                      <button
+                        type="button"
+                        key=${i}
+                        class="inline-flex items-center gap-1.5 py-1.5 pl-1.5 pr-2.5 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-200 text-left max-w-full transition-colors"
+                        onClick=${() => addFromCatalog(s.tipo, s.sentencia)}
+                        title=${'Usado ' + s.count + (s.count === 1 ? ' vez' : ' veces')}
+                      >
+                        <span class="text-xs font-semibold text-white px-1.5 py-0.5 rounded shrink-0 ${'badge-' + (s.tipo || '').toLowerCase()}">${stepTypeLabels[(s.tipo || '').toLowerCase()]?.short ?? (s.tipo ? s.tipo.charAt(0).toUpperCase() + s.tipo.slice(1).toLowerCase() : s.tipo)}</span>
+                        <span class="text-sm text-slate-700 truncate max-w-[min(48vw,28rem)]">${s.sentencia}</span>
+                        <span class="text-xs font-medium text-slate-400 shrink-0 tabular-nums">${s.count}×</span>
+                      </button>
+                    `)}
+                  </div>
+                </div>
+              `}
+            </div>
+          </div>
+          ${editingSavedIndex != null && html`
+            <div class="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/40" onClick=${closeEditName} role="dialog" aria-modal="true" aria-label="Editar nombre">
+              <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-4" onClick=${e => e.stopPropagation()}>
+                <h3 class="text-sm font-medium text-slate-800 mb-3">Editar nombre</h3>
+                <input type="text" class="w-full py-2 px-3 border border-slate-300 rounded-lg text-sm mb-4" placeholder="ej. Login básico" value=${editingSavedName} onInput=${e => setEditingSavedName(e.target.value)} onKeyDown=${e => { if (e.key === 'Enter') saveEditName(); if (e.key === 'Escape') closeEditName(); }} />
+                <div class="flex justify-end gap-2">
+                  <button type="button" class="py-1.5 px-3 text-sm text-slate-600 hover:bg-slate-100 rounded-lg" onClick=${closeEditName}>Cancelar</button>
+                  <button type="button" class="py-1.5 px-3 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700" onClick=${saveEditName}>Aceptar</button>
+                </div>
+              </div>
+            </div>
+          `}
+          ${showNewConfirm && html`
+            <div class="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/40" onClick=${() => setShowNewConfirm(false)} role="dialog" aria-modal="true" aria-label="¿Guardar antes de borrar?">
+              <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-4" onClick=${e => e.stopPropagation()}>
+                <h3 class="text-sm font-medium text-slate-800 mb-2">Empezar escenario nuevo</h3>
+                <p class="text-sm text-slate-600 mb-4">Tienes contenido sin guardar. ¿Qué quieres hacer?</p>
+                <div class="flex flex-col gap-2">
+                  <button type="button" class="w-full py-2 px-3 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700" onClick=${confirmSaveAndNew}>Guardar en Guardados y borrar</button>
+                  <button type="button" class="w-full py-2 px-3 text-sm text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200" onClick=${confirmDiscardAndNew}>Borrar sin guardar</button>
+                  <button type="button" class="w-full py-2 px-3 text-sm text-slate-600 hover:bg-slate-100 rounded-lg" onClick=${() => setShowNewConfirm(false)}>Cancelar</button>
+                </div>
+              </div>
+            </div>
+          `}
+          ${showDuplicateDialog && html`
+            <div class="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/40" onClick=${() => setShowDuplicateDialog(false)} role="dialog" aria-modal="true" aria-label="Escenario duplicado">
+              <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-4" onClick=${e => e.stopPropagation()}>
+                <h3 class="text-sm font-medium text-slate-800 mb-2">Ya guardado</h3>
+                <p class="text-sm text-slate-600 mb-4">Ya tienes un escenario exactamente igual guardado que se llama <strong>${duplicateNombre}</strong>.</p>
+                <button type="button" class="w-full py-2 px-3 text-sm font-medium bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300" onClick=${() => setShowDuplicateDialog(false)}>Cerrar</button>
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+    };
+
+    const findScenarioFlow = (allStatements, statement) => {
+      const peers = (allStatements || []).filter(s =>
+        s.scenario === statement?.scenario && s.feature === statement?.feature
+      );
+      return peers.find(s => s.flow)?.flow || null;
+    };
+
+    const scenarioFlowsForPattern = (allStatements, pattern) => [...new Set(
+      (allStatements || [])
+        .filter(s => s.pattern === pattern)
+        .map(s => findScenarioFlow(allStatements, s))
+        .filter(Boolean)
+    )].sort();
+
+    const FlowBadge = ({ flow, scenarioFlow, maestroFlowPath }) => {
+      const displayFlow = flow || scenarioFlow;
+      if (!displayFlow) {
+        return html`<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200 shrink-0" title="Sin flow Maestro asociado al escenario">Flow: —</span>`;
+      }
+      const executes = Boolean(flow);
+      const className = executes
+        ? 'bg-blue-50 text-blue-800 border-blue-200'
+        : 'bg-slate-100 text-slate-500 border-slate-200';
+      const title = executes
+        ? (maestroFlowPath || `Ejecuta maestro/flows/${displayFlow}.yml`)
+        : `Paso del escenario; implementado dentro del flow ${displayFlow}`;
+      return html`<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border shrink-0 ${className}" title=${title}>Flow: ${displayFlow}</span>`;
+    };
+
+    const FlowBadgesForStep = ({ statement, allStatements, maestroFlowPath }) => {
+      if (statement.flow) {
+        return html`<${FlowBadge} flow=${statement.flow} maestroFlowPath=${maestroFlowPath || statement.maestroFlowPath} />`;
+      }
+      const flow = findScenarioFlow(allStatements, statement);
+      if (!flow) return html`<${FlowBadge} />`;
+      return html`<${FlowBadge} scenarioFlow=${flow} />`;
+    };
+
+    const FlowBadgesForGroup = ({ statement, occurrences, allStatements, maestroFlowPath }) => {
+      if (statement.flow) {
+        return html`<${FlowBadge} flow=${statement.flow} maestroFlowPath=${maestroFlowPath || statement.maestroFlowPath} />`;
+      }
+      const flows = [...new Set(
+        (occurrences || []).map(s => findScenarioFlow(allStatements, s)).filter(Boolean)
+      )].sort();
+      if (flows.length === 0) return html`<${FlowBadge} />`;
+      return html`<span class="inline-flex flex-wrap gap-1 justify-end">${flows.map(f => html`<${FlowBadge} key=${f} scenarioFlow=${f} />`)}</span>`;
+    };
+
+    const Tag = ({ tag }) => {
+      const isTicket = /^@\[\d+\]$/.test(tag);
+      const ticketNumber = isTicket ? tag.match(/\d+/)[0] : null;
+      const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border";
+      let tagClasses = "bg-slate-100 text-slate-700 border-slate-200";
+      if (tag.includes('regression')) {
+        tagClasses = "bg-amber-50 text-amber-800 border-amber-200";
+      } else if (tag.includes('core')) {
+        tagClasses = "bg-blue-50 text-blue-800 border-blue-200";
+      } else if (tag.includes('mobile') || tag.includes('traspaso')) {
+        tagClasses = "bg-violet-50 text-violet-800 border-violet-200";
+      }
+      return isTicket
+        ? html`<a class="${baseClasses} ${tagClasses} no-underline hover:opacity-90" href="${ticketLink}${ticketNumber}" target="_blank" rel="noopener">US-${ticketNumber}</a>`
+        : html`<span class="${baseClasses} ${tagClasses}">${tag}</span>`;
+    };
+
+    const FileTag = ({ featureName, onClick }) => html`
+      <button
+        type="button"
+        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition-colors cursor-pointer no-underline"
+        title="Ver todos los pasos de este archivo de especificación"
+        onClick=${() => onClick(featureName)}
+      >
+        ${featureName}
+      </button>
+    `;
+
+    const OccurrenceItem = ({ statement, allStatements }) => html`
+      <div class="occurrence-item relative pl-5 py-3 px-4 bg-white border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+          <span><strong class="text-slate-700">Funcionalidad:</strong> ${statement.funcionalidad}</span>
+          <span class="text-slate-400">·</span>
+          <span><strong class="text-slate-700">Caso:</strong> ${statement.scenario}</span>
+          <${FlowBadgesForStep} statement=${statement} allStatements=${allStatements} />
+        </div>
+      </div>
+    `;
+
+    const ScenarioInfo = ({ statement }) => html`
+      <div class="px-4 py-3 bg-slate-50/80 border-t border-slate-100 text-sm text-slate-600">
+        <span><strong class="text-slate-700">Funcionalidad:</strong> ${statement.funcionalidad}</span>
+        <span class="mx-2 text-slate-300">·</span>
+        <span><strong class="text-slate-700">Caso:</strong> ${statement.scenario}</span>
+        <div class="text-xs text-slate-400 mt-1">${statement.feature}</div>
+      </div>
+    `;
+
+    const borderClass = { given: 'border-l-blue-600', when: 'border-l-amber-600', then: 'border-l-emerald-600', and: 'border-l-slate-500', but: 'border-l-red-600' };
+    const isTicketTag = (tag) => /^@\[\d+\]$/.test(tag);
+    const sortTagsForDisplay = (tags) => {
+      const atTags = tags.filter(t => t.startsWith('@') && !isTicketTag(t)).sort();
+      const usTags = tags.filter(isTicketTag).sort((a, b) => {
+        const nA = parseInt(a.replace(/\D/g, ''), 10);
+        const nB = parseInt(b.replace(/\D/g, ''), 10);
+        return (nA - nB) || a.localeCompare(b);
+      });
+      return [...atTags, ...usTags];
+    };
+
+    const StatementCard = ({ group, allStatements, onFileTagClick, onCopyStep, copiedKey }) => {
+      const isMultiple = group.occurrences.length > 1;
+      const first = group.occurrences[0];
+      const allTagsRaw = [...new Set(group.occurrences.flatMap(s => s.tags))];
+      const allTags = sortTagsForDisplay(allTagsRaw);
+      const uniqueFeatures = isMultiple ? [...new Set(group.occurrences.map(s => s.feature).filter(Boolean))].sort() : [];
+      const tipo = group.tipo.toLowerCase();
+      const info = stepTypeLabels[tipo] || { display: group.tipo, short: group.tipo };
+      const border = borderClass[tipo] || 'border-l-slate-400';
+      const stepLine = `${group.tipo} ${group.sentencia}`;
+      const key = group.tipo + '-' + group.sentencia;
+      const justCopied = copiedKey === key;
+
+      return html`
+        <article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+          <div class="border-l-4 ${border} py-4 px-5 ${isMultiple ? 'bg-slate-50/50' : ''}">
+            <div class="flex flex-wrap items-start gap-3">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold text-white badge-${tipo} shrink-0" title="${stepTypeLabels[tipo]?.desc || ''}">
+                ${info.short}
+              </span>
+              <p class="card-step-text text-slate-800 font-medium flex-1 min-w-0">${group.sentencia}</p>
+              <${FlowBadgesForGroup} statement=${first} occurrences=${group.occurrences} allStatements=${allStatements} maestroFlowPath=${first.maestroFlowPath} />
+              ${isMultiple && html`
+                <span class="shrink-0 text-xs font-medium text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg">
+                  Se usa en ${group.occurrences.length} casos
+                </span>
+              `}
+              ${onCopyStep && html`
+                <button type="button" class="shrink-0 ml-auto text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors" title="Copiar paso para usar en tu especificación" onClick=${() => onCopyStep(stepLine, key)}>
+                  ${justCopied ? 'Copiado' : 'Copiar'}
+                </button>
+              `}
+            </div>
+            ${!isMultiple && html`
+              <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500 items-center">
+                <span><strong class="text-slate-600">Funcionalidad:</strong> ${first.funcionalidad}</span>
+                <span><strong class="text-slate-600">Caso:</strong> ${first.scenario}</span>
+              </div>
+            `}
+            ${(allTags.length > 0 || (first.feature && onFileTagClick) || (isMultiple && uniqueFeatures.length > 0 && onFileTagClick)) && html`
+              <div class="flex flex-wrap gap-2 mt-3 items-center">
+                ${allTags.map(tag => html`<${Tag} key=${tag} tag=${tag} />`)}
+                ${!isMultiple && first.feature && onFileTagClick && html`<${FileTag} featureName=${first.feature} onClick=${onFileTagClick} />`}
+                ${isMultiple && uniqueFeatures.length > 0 && onFileTagClick && uniqueFeatures.map(f => html`<${FileTag} key=${f} featureName=${f} onClick=${onFileTagClick} />`)}
+              </div>
+            `}
+          </div>
+          ${isMultiple && html`
+            <div class="border-t border-slate-100">${group.occurrences.map((s, i) => html`<${OccurrenceItem} key=${i} statement=${s} allStatements=${allStatements} />`)}</div>
+          `}
+        </article>
+      `;
+    };
+
+    const FilterButton = ({ filter, count, active, onClick, label, short }) => html`
+      <button
+        type="button"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-all ${active
+          ? 'bg-indigo-600 text-white shadow-sm'
+          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+        }"
+        onClick=${() => onClick(filter)}
+        title=${label}
+      >
+        <span class="hidden sm:inline">${label}</span>
+        <span class="sm:hidden">${short}</span>
+        <span class="ml-1.5 opacity-90">${count}</span>
+      </button>
+    `;
+
+    const miniCardClass = (key, viewMode) => {
+      const base = 'rounded-lg px-2.5 py-1.5 text-center cursor-pointer transition-all border shrink-0 ';
+      const active = viewMode === key ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200';
+      return base + active;
+    };
+
+    const Header = ({ currentFilter, counts, searchTerm, onFilterChange, onSearchChange, generationDate, showMiniBanner, showConstructorInHeader, onOpenConstructor, analytics, viewMode, onViewModeChange }) => {
+      const statements = analytics?.statements || [];
+      const uniqueScenarios = new Set(statements.map(s => s.feature + '|' + s.scenario));
+      return html`
+      <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+          <div class="flex flex-col gap-4">
+            ${generationDate && html`<p class="text-xs text-slate-400">Última extracción Gherkin: ${generationDate}</p>`}
+            <div class="relative">
+              <label for="search-input" class="sr-only">Buscar en el catálogo</label>
+              <input
+                id="search-input"
+                type="search"
+                class="w-full py-3 pl-4 pr-10 text-base border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-slate-400"
+                placeholder="Buscar pasos para inspirarte: introduce, selecciona, muestra, login, fecha…"
+                value=${searchTerm}
+                onInput=${(e) => onSearchChange(e.target.value)}
+                autocomplete="off"
+              />
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-sm text-slate-500 mr-1">Show:</span>
+              <${FilterButton} filter="all" count=${counts.all} active=${currentFilter === 'all'} onClick=${onFilterChange} label="All" short="All" />
+              ${typeOrder.map(k => html`
+                <${FilterButton}
+                  filter=${k}
+                  count=${counts[k]}
+                  active=${currentFilter === k}
+                  onClick=${onFilterChange}
+                  label=${stepTypeLabels[k].short}
+                  short=${stepTypeLabels[k].short}
+                />
+              `)}
+              ${(showMiniBanner || showConstructorInHeader) && html`
+                <div class="flex items-center gap-2 ml-auto">
+                  ${showMiniBanner && analytics && html`
+                    <button type="button" class="${miniCardClass('archivos', viewMode)} text-xs font-medium" onClick=${() => onViewModeChange('archivos')} title="Features">${analytics.totalArchivos || 0} Features</button>
+                    <button type="button" class="${miniCardClass('pasos', viewMode)} text-xs font-medium" onClick=${() => onViewModeChange('pasos')} title="Pasos">${analytics.totalSentencias || 0} Pasos</button>
+                    <button type="button" class="${miniCardClass('casos', viewMode)} text-xs font-medium" onClick=${() => onViewModeChange('casos')} title="Casos">${uniqueScenarios.size} Casos</button>
+                    <button type="button" class="${miniCardClass('definiciones', viewMode)} text-xs font-medium" onClick=${() => onViewModeChange('definiciones')} title="Definiciones">${analytics.totalDefiniciones || 0} Def.</button>
+                  `}
+                  ${showConstructorInHeader && html`
+                    <button type="button" class="py-1.5 px-3 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shrink-0" onClick=${onOpenConstructor} title="Abrir Constructor Gherkin">Constructor</button>
+                  `}
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
+      </header>
+    `;
+    };
+
+    const AnalyticsBanner = ({ analytics, viewMode, onViewModeChange }) => {
+      const statements = analytics.statements || [];
+      const uniqueScenarios = new Set(statements.map(s => s.feature + '|' + s.scenario));
+      const cardClass = (key) => {
+        const base = 'rounded-xl px-4 py-3 text-center backdrop-blur-sm cursor-pointer transition-all border-2 ';
+        const active = viewMode === key ? 'bg-white/25 border-white shadow-lg scale-[1.02]' : 'bg-white/10 border-transparent hover:bg-white/20 hover:border-white/30';
+        return base + active;
+      };
+
+      return html`
+        <section id="hero-banner" class="hero-gradient text-white rounded-2xl px-6 py-8 mb-8 shadow-lg" aria-label="Resumen del catálogo">
+          <h2 class="text-xl font-bold mb-1 text-center">Catálogo de pasos — Izertis Maestro Template</h2>
+          <p class="text-white/90 text-sm mb-6 text-center">Haz clic en una tarjeta para ver el listado filtrado por esa opción.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <button type="button" class="${cardClass('archivos')} text-left" onClick=${() => onViewModeChange('archivos')} title="Ver listado por feature">
+              <span class="block text-2xl font-bold">${analytics.totalArchivos || 0}</span>
+              <span class="text-xs uppercase tracking-wide opacity-90 block">Features</span>
+            </button>
+            <button type="button" class="${cardClass('pasos')} text-left" onClick=${() => onViewModeChange('pasos')} title="Ver listado de pasos">
+              <span class="block text-2xl font-bold">${analytics.totalSentencias || 0}</span>
+              <span class="text-xs uppercase tracking-wide opacity-90 block">Pasos</span>
+            </button>
+            <button type="button" class="${cardClass('casos')} text-left" onClick=${() => onViewModeChange('casos')} title="Ver listado por caso de prueba">
+              <span class="block text-2xl font-bold">${uniqueScenarios.size}</span>
+              <span class="text-xs uppercase tracking-wide opacity-90 block">Casos</span>
+            </button>
+            <button type="button" class="${cardClass('definiciones')} text-left" onClick=${() => onViewModeChange('definiciones')} title="Ver step-definitions JSON">
+              <span class="block text-2xl font-bold">${analytics.totalDefiniciones || 0}</span>
+              <span class="text-xs uppercase tracking-wide opacity-90 block">Definiciones</span>
+            </button>
+          </div>
+        </section>
+      `;
+    };
+
+    const getFileName = (path) => (path || '').split(/[/\\]/).pop() || path;
+
+    const StepLine = ({ statement, scenarioFlow }) => {
+      const tipo = (statement.tipo || '').toLowerCase();
+      const border = borderClass[tipo] || 'border-l-slate-400';
+      return html`
+        <div class="flex items-start gap-2 py-2 px-3 border-l-4 ${border} bg-slate-50/80 rounded-r">
+          <span class="shrink-0 text-xs font-semibold text-slate-500 uppercase">${statement.tipo}</span>
+          <span class="text-slate-800 text-sm flex-1 min-w-0">${statement.sentencia}</span>
+          <${FlowBadge} flow=${statement.flow} scenarioFlow=${scenarioFlow} maestroFlowPath=${statement.maestroFlowPath} />
+        </div>
+      `;
+    };
+
+    const DefinitionsList = ({ definiciones, statements, loading, searchTerm }) => {
+      if (loading) return html`<div class="flex flex-col items-center justify-center py-20 text-slate-500"><p class="text-lg">Cargando definiciones…</p></div>`;
+      const term = (searchTerm || '').toLowerCase();
+      const filtered = (definiciones || []).filter(d => {
+        if (!term) return true;
+        return [d.pattern, d.flow, d.description, d.definitionFile, d.maestroFlowPath]
+          .filter(Boolean)
+          .some(v => String(v).toLowerCase().includes(term));
+      });
+      if (filtered.length === 0) return html`
+        <div class="text-center py-16 px-4 bg-slate-100 rounded-xl">
+          <h3 class="text-lg font-semibold text-slate-700 mb-2">No hay definiciones</h3>
+          <p class="text-slate-600 text-sm">Prueba a cambiar el texto de búsqueda.</p>
+        </div>
+      `;
+      return html`
+        <div class="space-y-3">
+          ${filtered.map((d, i) => {
+            const relatedFlows = scenarioFlowsForPattern(statements, d.pattern);
+            return html`
+            <article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden px-4 py-3">
+              <div class="flex flex-wrap items-start gap-2 justify-between">
+                <p class="text-sm font-medium text-slate-800 flex-1 min-w-0">${d.pattern}</p>
+                ${d.flow
+                  ? html`<${FlowBadge} flow=${d.flow} maestroFlowPath=${d.maestroFlowPath} />`
+                  : relatedFlows.length > 0
+                    ? html`<span class="inline-flex flex-wrap gap-1 justify-end">${relatedFlows.map(f => html`<${FlowBadge} key=${f} scenarioFlow=${f} />`)}</span>`
+                    : html`<${FlowBadge} />`}
+              </div>
+              <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                <span class="bg-slate-100 px-2 py-0.5 rounded">${d.definitionFile}</span>
+                ${d.usadoEnFeatures
+                  ? html`<span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Usado en features</span>`
+                  : html`<span class="bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">Sin uso en features</span>`}
+                ${d.paramNames && d.paramNames.length > 0 && html`<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded">Params: ${d.paramNames.join(', ')}</span>`}
+              </div>
+              ${d.description && html`<p class="mt-2 text-sm text-slate-600">${d.description}</p>`}
+            </article>
+          `})}
+        </div>
+      `;
+    };
+
+    const groupBy = (statements, keyFn) => {
+      const map = {};
+      (statements || []).forEach(s => {
+        const k = keyFn(s);
+        if (!map[k]) map[k] = [];
+        map[k].push(s);
+      });
+      return Object.entries(map).sort((a, b) => a[0].localeCompare(b[0]));
+    };
+
+    const GroupedList = ({ statements, allStatements, viewMode, loading, error, onFileTagClick, onCopyStep, copiedKey }) => {
+      if (loading) return html`<div class="flex flex-col items-center justify-center py-20 text-slate-500"><p class="text-lg">Cargando catálogo…</p></div>`;
+      if (error) return html`
+        <div class="text-center py-16 px-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <h3 class="text-lg font-semibold text-amber-900 mb-2">No se pudieron cargar los datos</h3>
+          <p class="text-amber-800 text-sm">${error}</p>
+        </div>
+      `;
+      if (!statements || statements.length === 0) return html`
+        <div class="text-center py-16 px-4 bg-slate-100 rounded-xl">
+          <h3 class="text-lg font-semibold text-slate-700 mb-2">No hay resultados</h3>
+          <p class="text-slate-600 text-sm">Prueba a cambiar el texto de búsqueda o el filtro Show.</p>
+        </div>
+      `;
+
+      if (viewMode === 'pasos') {
+        const grouped = groupStatements(statements);
+        return html`
+          <div class="space-y-4">
+            ${grouped.map((g, i) => html`<${StatementCard} key=${i} group=${g} allStatements=${allStatements} onFileTagClick=${onFileTagClick} onCopyStep=${onCopyStep} copiedKey=${copiedKey} />`)}
+          </div>
+        `;
+      }
+
+      let keyFn, titleKey, subtitleKey;
+      if (viewMode === 'archivos') {
+        keyFn = s => getFileName(s.archivo);
+        titleKey = 'Feature';
+        subtitleKey = null;
+      } else {
+        keyFn = s => (s.feature || '') + '|' + (s.scenario || '');
+        titleKey = 'Caso';
+        subtitleKey = 'feature';
+      }
+
+      const entries = groupBy(statements, keyFn);
+
+      return html`
+        <div class="space-y-8">
+          ${entries.map(([key, items]) => {
+            const parts = key.split('|');
+            const title = viewMode === 'casos' ? (parts[1] || key) : key;
+            const subtitle = viewMode === 'casos' && parts[0] ? parts[0] : null;
+            return html`
+              <section class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="px-4 py-3 bg-slate-100 border-b border-slate-200">
+                  <h3 class="font-semibold text-slate-800">${titleKey}: ${title}</h3>
+                  ${subtitle && onFileTagClick && html`<div class="mt-1.5"><${FileTag} featureName=${subtitle} onClick=${onFileTagClick} /></div>`}
+                  ${subtitle && !onFileTagClick && html`<p class="text-xs text-slate-500 mt-0.5">${subtitle}</p>`}
+                  <p class="text-xs text-slate-400 mt-1">${items.length} paso${items.length !== 1 ? 's' : ''}</p>
+                </div>
+                <div class="divide-y divide-slate-100">
+                  ${items.map((s, i) => html`<${StepLine} key=${i} statement=${s} scenarioFlow=${findScenarioFlow(allStatements, s)} />`)}
+                </div>
+              </section>
+            `;
+          })}
+        </div>
+      `;
+    };
+
+    const App = () => {
+      const [allStatements, setAllStatements] = useState([]);
+      const [definiciones, setDefiniciones] = useState([]);
+      const [filteredStatements, setFilteredStatements] = useState([]);
+      const [currentFilter, setCurrentFilter] = useState('all');
+      const [searchTerm, setSearchTerm] = useState('');
+      const [viewMode, setViewMode] = useState('pasos');
+      const [heroInView, setHeroInView] = useState(true);
+      const [helpSectionInView, setHelpSectionInView] = useState(true);
+      const [copiedKey, setCopiedKey] = useState('');
+      const [constructorOpen, setConstructorOpen] = useState(false);
+      const [constructorSteps, setConstructorSteps] = useState([]);
+      const [constructorFeatureName, setConstructorFeatureName] = useState('');
+      const [constructorScenarioName, setConstructorScenarioName] = useState('');
+      const [customSteps, setCustomSteps] = useState(() => {
+        try {
+          const raw = localStorage.getItem(CONSTRUCTOR_STORAGE_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch (_) { return []; }
+      });
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [analytics, setAnalytics] = useState({});
+      const [generationDate, setGenerationDate] = useState('');
+
+      useEffect(() => {
+        const el = document.getElementById('hero-banner');
+        const headerEl = document.querySelector('header');
+        if (!el) return;
+        const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 180;
+        const obs = new IntersectionObserver(([entry]) => setHeroInView(entry.isIntersecting), {
+          threshold: 0,
+          rootMargin: `-${headerHeight}px 0px 0px 0px`
+        });
+        obs.observe(el);
+        return () => obs.disconnect();
+      }, [loading]);
+
+      useEffect(() => {
+        const el = document.getElementById('help-section-gherkin');
+        const headerEl = document.querySelector('header');
+        if (!el) return;
+        const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 180;
+        const obs = new IntersectionObserver(([entry]) => setHelpSectionInView(entry.isIntersecting), {
+          threshold: 0,
+          rootMargin: `-${headerHeight}px 0px 0px 0px`
+        });
+        obs.observe(el);
+        return () => obs.disconnect();
+      }, [loading]);
+
+      useEffect(() => {
+        if (constructorOpen) {
+          const prev = document.body.style.overflow;
+          document.body.style.overflow = 'hidden';
+          return () => { document.body.style.overflow = prev || ''; };
+        }
+      }, [constructorOpen]);
+
+      useEffect(() => {
+        const load = async () => {
+          try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('No se pudo cargar el archivo');
+            const data = await res.json();
+            setAllStatements(data.sentencias || []);
+            setDefiniciones(data.definiciones || []);
+            setAnalytics({ ...data.analytics, statements: data.sentencias });
+            setGenerationDate(formatDate(data.generatedAt));
+          } catch (e) {
+            setError(e.message);
+          }
+          setLoading(false);
+        };
+        load();
+      }, []);
+
+      useEffect(() => {
+        const filtered = allStatements.filter(s => {
+          const matchType = currentFilter === 'all' || s.tipo.toLowerCase() === currentFilter;
+          const term = (searchTerm || '').toLowerCase();
+          const matchSearch = !term ||
+            (s.sentencia && s.sentencia.toLowerCase().includes(term)) ||
+            (s.feature && s.feature.toLowerCase().includes(term)) ||
+            (s.scenario && s.scenario.toLowerCase().includes(term)) ||
+            (s.funcionalidad && s.funcionalidad.toLowerCase().includes(term)) ||
+            (s.archivo && s.archivo.toLowerCase().includes(term));
+          return matchType && matchSearch;
+        });
+        setFilteredStatements(filtered);
+      }, [allStatements, currentFilter, searchTerm]);
+
+      const getCounts = () => {
+        const c = { all: allStatements.length };
+        typeOrder.forEach(t => { c[t] = allStatements.filter(s => s.tipo.toLowerCase() === t).length; });
+        return c;
+      };
+      const counts = getCounts();
+
+      return html`
+        <${Header}
+          currentFilter=${currentFilter}
+          counts=${counts}
+          searchTerm=${searchTerm}
+          onFilterChange=${setCurrentFilter}
+          onSearchChange=${setSearchTerm}
+          generationDate=${generationDate}
+          showMiniBanner=${!heroInView}
+          showConstructorInHeader=${!helpSectionInView}
+          onOpenConstructor=${() => setConstructorOpen(true)}
+          analytics=${analytics}
+          viewMode=${viewMode}
+          onViewModeChange=${setViewMode}
+        />
+        <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+          <${AnalyticsBanner} analytics=${analytics} viewMode=${viewMode} onViewModeChange=${setViewMode} />
+          <details id="help-section-gherkin" class="mb-6 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+            <summary class="px-4 py-3 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-100 select-none flex items-center justify-between gap-2">
+              <span>Ayuda para redactar Gherkin</span>
+              <button type="button" class="shrink-0 py-1.5 px-3 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700" onClick=${(e) => { e.preventDefault(); setConstructorOpen(true); }}>Constructor</button>
+            </summary>
+            <div class="px-4 pb-4 pt-1 text-sm text-slate-600 border-t border-slate-100">
+              <p class="mb-2"><strong>Given</strong> = contexto o situación inicial (ej. el usuario ha hecho login). <strong>When</strong> = acción del usuario (ej. el usuario introduce la fecha). <strong>Then</strong> = resultado observable (ej. se muestra la confirmación).</p>
+              <p class="text-slate-500">Usa el <strong>Constructor</strong> para montar escenarios o features con pasos del catálogo o con tus propios pasos (guardados en tu navegador).</p>
+            </div>
+          </details>
+          <${ConstructorDialog}
+            open=${constructorOpen}
+            onClose=${() => setConstructorOpen(false)}
+            allStatements=${allStatements}
+            steps=${constructorSteps}
+            setSteps=${setConstructorSteps}
+            featureName=${constructorFeatureName}
+            setFeatureName=${setConstructorFeatureName}
+            scenarioName=${constructorScenarioName}
+            setScenarioName=${setConstructorScenarioName}
+            customSteps=${customSteps}
+            addSavedScenario=${(payload) => { const next = [...customSteps, { nombre: payload.nombre || 'Sin nombre', featureName: payload.featureName || '', scenarioName: payload.scenarioName || '', steps: Array.isArray(payload.steps) ? payload.steps.map(s => ({ tipo: s.tipo, sentencia: s.sentencia })) : [] }]; setCustomSteps(next); try { localStorage.setItem(CONSTRUCTOR_STORAGE_KEY, JSON.stringify(next)); } catch (_) {} }}
+            removeCustomStep=${(index) => { const next = customSteps.filter((_, i) => i !== index); setCustomSteps(next); try { localStorage.setItem(CONSTRUCTOR_STORAGE_KEY, JSON.stringify(next)); } catch (_) {} }}
+            updateCustomStep=${(index, updates) => { const next = customSteps.map((c, i) => i === index ? { ...c, ...updates } : c); setCustomSteps(next); try { localStorage.setItem(CONSTRUCTOR_STORAGE_KEY, JSON.stringify(next)); } catch (_) {} }}
+          />
+          ${viewMode === 'definiciones'
+            ? html`<${DefinitionsList} definiciones=${definiciones} statements=${allStatements} loading=${loading} searchTerm=${searchTerm} />`
+            : html`<${GroupedList}
+            statements=${filteredStatements}
+            allStatements=${allStatements}
+            viewMode=${viewMode}
+            loading=${loading}
+            error=${error}
+            onFileTagClick=${(name) => { setViewMode('archivos'); setSearchTerm(name); }}
+            onCopyStep=${(text, key) => { navigator.clipboard.writeText(text).then(() => { setCopiedKey(key); setTimeout(() => setCopiedKey(''), 2000); }); }}
+            copiedKey=${copiedKey}
+          />`}
+        </main>
+      `;
+    };
+
+    render(html`<${App} />`, document.getElementById('app'));
+  </script>
+</body>
+
+</html>

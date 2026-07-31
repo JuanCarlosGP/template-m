@@ -51,6 +51,19 @@ Ships **only `maestro`** so the IDE opens cleanly. Add one TMS block when automa
 
 ## Use with your IDE
 
-Point your agent at [`author-e2e-test/SKILL.md`](author-e2e-test/SKILL.md) with an issue ID, or at individual agents for a single step.
+### IDE slash / agent commands
+
+Skills are wired under [`.agents/skills/`](../../.agents/skills/) (thin wrappers → playbooks here). In your IDE agent chat type `/` and pick:
+
+| Command | Playbook |
+|---------|----------|
+| `/author-e2e-test` | [`author-e2e-test/SKILL.md`](author-e2e-test/SKILL.md) |
+| `/debug-flow` | [`debug-flow/SKILL.md`](debug-flow/SKILL.md) |
+| `/run-tests-e2e` | [`run-tests-e2e/SKILL.md`](run-tests-e2e/SKILL.md) |
+| `/committing` | [`committing/SKILL.md`](committing/SKILL.md) |
+
+If a new command does not appear, reload the window once (`Developer: Reload Window`).
+
+You can also `@`-mention a playbook or paste an issue ID and ask the agent to follow [`author-e2e-test/SKILL.md`](author-e2e-test/SKILL.md).
 
 Optional hooks: [`maestro/scripts/hooks/`](../../maestro/scripts/hooks/README.md).

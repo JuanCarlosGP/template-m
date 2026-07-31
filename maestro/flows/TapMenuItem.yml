@@ -1,7 +1,7 @@
 appId: ${APP_ID}
-name: WebViewClear
+name: TapMenuItem
 ---
 - runFlow:
     when:
       platform: Android
-    file: ../android/WebViewClear.yml
+    file: ../android/TapMenuItem.yml

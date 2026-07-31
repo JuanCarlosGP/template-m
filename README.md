@@ -2,7 +2,7 @@
 
 **Versión:** 0.3.3
 
-Plantilla del framework de tests E2E con **Maestro** y **Gherkin**. Incluye un escenario de ejemplo contra **[Appium Practice](https://play.google.com/store/apps/details?id=com.expandtesting.practice)** (Android). Sustituye o amplía con tests de tu app.
+Plantilla del framework de tests E2E con **Maestro** y **Gherkin**. App de demo: **[Sauce Labs My Demo App](https://github.com/saucelabs/my-demo-app-android)** (Android, `com.saucelabs.mydemoapp.android`). Sustituye o amplía con tests de tu app.
 
 ## Stack
 
@@ -17,7 +17,7 @@ Plantilla del framework de tests E2E con **Maestro** y **Gherkin**. Incluye un e
 
 ### Core (siempre)
 
-Gherkin, step-definitions, flows Maestro, runner y validación estática. Funciona sin Azure ni CI concreto; el ejemplo incluido requiere dispositivo Android con Appium Practice instalada.
+Gherkin, step-definitions, flows Maestro, runner y validación estática. Funciona sin Azure ni CI concreto; los escenarios contra My Demo App requieren dispositivo Android con la app instalada.
 
 ```
 features/ ──► gherkin-runner.js ──► step-definitions/ ──► flows/*.yml ──► dispositivo
@@ -67,13 +67,13 @@ Reglas para agentes: [`AGENTS.md`](AGENTS.md).
 
 **Antes:** emulador o simulador con la app instalada, `.env` configurado, MCP `maestro` en [`.mcp.json`](.mcp.json) (TMS opcional para leer la issue — ver [`mcp-examples.md`](docs/agent/mcp-examples.md)).
 
-En Cursor (o tu IDE con agente), pega algo como:
+En el chat de agente de tu IDE (p. ej. VS Code + extensión de agentes, u otro IDE compatible), escribe `/author-e2e-test` (skills en [`.agents/skills/`](.agents/skills/)) o pega:
 
 ```
 Automatiza la issue #123 siguiendo docs/agent/author-e2e-test/SKILL.md
 ```
 
-Sustituye `#123` por tu issue de GitHub/GitLab, work item de Azure o el ID que uses.
+Otros slash: `/debug-flow`, `/run-tests-e2e`, `/committing`. Si no aparecen, recarga la ventana una vez.
 
 **Qué hará el agente:**
 
@@ -169,21 +169,24 @@ Plantilla: `[.env.example](.env.example)` — bloques **Core**, **Reporting**, *
 
 
 
-## Escenario de ejemplo (Appium Practice)
+## App de ejemplo (Sauce Labs My Demo App)
 
-App real en Play Store — Android. Ilustra Gherkin parametrizado, flows en `android/` y asserts reutilizables.
+App open-source de Sauce Labs — Android. Package ID: `com.saucelabs.mydemoapp.android`.
 
-| Feature | Descripción | Ejecución rápida |
-|---------|-------------|------------------|
-| `AppiumPracticeExpandBank.feature` | Login en **12 EXPAND BANK** (`practice` / `practice`) → texto **Logout** | `npm run feature:expand-bank-login` |
+| Recurso | Valor |
+|---------|-------|
+| Repositorio | [saucelabs/my-demo-app-android](https://github.com/saucelabs/my-demo-app-android) |
+| `ANDROID_APP_ID` | `com.saucelabs.mydemoapp.android` |
+| Step-definitions | `maestro/step-definitions/{common,auth,webview,about}.json` |
+| Flow base | `maestro/flows/OpenApp.yml` |
 
-**Prerrequisitos:** dispositivo o emulador Android, [Appium Practice](https://play.google.com/store/apps/details?id=com.expandtesting.practice) instalada, `.env` con `ANDROID_APP_ID=com.expandtesting.practice` y `ANDROID_SERIAL` si aplica. Ver [`docs/DEVICE.md`](docs/DEVICE.md).
+**Prerrequisitos:** dispositivo o emulador Android, My Demo App instalada (APK desde [releases](https://github.com/saucelabs/my-demo-app-android/releases)), `.env` con `ANDROID_APP_ID=com.saucelabs.mydemoapp.android` y `ANDROID_SERIAL` si aplica. Ver [`docs/DEVICE.md`](docs/DEVICE.md).
 
 ---
 
 ## Tras crear tu proyecto
 
-Al hacer fork de la template, añade tests de **tu** app siguiendo el mismo patrón que el ejemplo Expand Bank:
+Al hacer fork de la template, añade tests de **tu** app siguiendo el mismo patrón (Gherkin → step-defs → flows):
 
 | Acción | Qué hacer |
 |--------|-----------|
@@ -205,14 +208,13 @@ npm run check                        # gate headless (preferido tras cambios)
 npm test
 npm run validate
 npm run doctor
-npm run feature:expand-bank-login    # ejemplo Appium Practice (Android, sin Azure)
 npm run feature -- --feature maestro/features/<TuFeature>.feature --platform android --no-publish
-npm run flow:android -- --flow maestro/flows/<TuFlow>.yml
+npm run flow:android -- --flow maestro/flows/OpenApp.yml
 npm run gherkin-extract
 npm run gherkin-report
 ```
 
-Pasa `--no-publish` al runner para no publicar en Azure (valor por defecto en `feature:expand-bank-login`).
+Pasa `--no-publish` al runner para no publicar en Azure.
 
 Tras un run con el runner, revisa `reports/summary.json` y `reports/junit.xml` (desactivar con `--no-reports`).
 
@@ -247,7 +249,7 @@ npm run gherkin-extract     # solo regenera JSON/CSV
 
 ---
 
-## Editor (VS Code / Cursor)
+## Editor (VS Code y compatibles)
 
 Los pasos Gherkin se resuelven en **`maestro/step-definitions/*.json`**, no en `.js`/`.ts`. La extensión **Cucumber (oficial)** marca pasos como *Undefined step* aunque `npm run validate` esté en verde.
 
@@ -258,7 +260,7 @@ El workspace incluye [`.vscode/extensions.json`](.vscode/extensions.json):
 | **Cucumber (Gherkin) Syntax and Snippets** | `stevejpurves.cucumber` | Recomendada — resaltado y snippets |
 | **Cucumber (oficial)** | `CucumberOpen.cucumber-official` | No recomendada en este template |
 
-Al abrir el repo, Cursor/VS Code puede sugerir instalar la extensión ligera.
+Al abrir el repo, el IDE puede sugerir instalar la extensión ligera.
 
 **Importante:** si tienes instalada **Cucumber (oficial)** (`CucumberOpen.cucumber-official`), desactívala en este workspace: Extensions → *Cucumber* → **Disable (Workspace)**. El reload solo no la quita; `unwantedRecommendations` no la desinstala.
 

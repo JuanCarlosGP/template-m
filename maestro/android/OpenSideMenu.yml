@@ -1,0 +1,5 @@
+appId: ${APP_ID}
+name: OpenSideMenu
+---
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/menuIV"

@@ -1,8 +1,0 @@
-appId: ${APP_ID}
-name: CounterDecrement
----
-- repeat:
-    times: ${TIMES}
-    commands:
-      - tapOn:
-          id: 'com.expandtesting.practice:id/btn_decrement'

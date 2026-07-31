@@ -6,7 +6,7 @@ const path = require('path')
 const fs = require('fs')
 const { resolveStep } = require('../step-definitions/index')
 const { getPickles, getPickleStepTexts, buildFlowsFromSteps, pickleLabel } = require('./lib/gherkin')
-const { buildRunSummary, writeReports } = require('./lib/write-reports')
+const { buildRunSummary, buildStepReports, writeReports } = require('./lib/write-reports')
 const { resolveAzurePlanId, resolveAzureSuiteId } = require('./lib/azure-env')
 const { publishResults: _publishResults, fetchSuiteTestCases } = require('./publish-results')
 const {
@@ -308,6 +308,8 @@ async function runFeature(featurePath, filterScenarioName, platform, appId, bsCo
   }
 
   const fileName = path.basename(featurePath)
+  const repoRoot = path.join(__dirname, '..', '..')
+  const featureRel = path.relative(repoRoot, featurePath).replace(/\\/g, '/')
   console.log(formatFeatureHeader(fileName))
 
   const nameCounts = new Map()
@@ -315,7 +317,7 @@ async function runFeature(featurePath, filterScenarioName, platform, appId, bsCo
     nameCounts.set(pickle.name, (nameCounts.get(pickle.name) || 0) + 1)
   }
 
-  /** @type {{ scenarioName: string, status: 'passed' | 'failed', error: string | null, screenshotPath: string | null, testCaseId?: string | number }[]} */
+  /** @type {Array<object>} */
   const results = []
 
   const nameIndex = new Map()
@@ -334,6 +336,7 @@ async function runFeature(featurePath, filterScenarioName, platform, appId, bsCo
         keyword: gherkinKeywordFromPickleStep(step),
         text: step.text,
         flow: resolved.flow,
+        params: resolved.params || {},
       }
     })
 
@@ -348,11 +351,20 @@ async function runFeature(featurePath, filterScenarioName, platform, appId, bsCo
       })
     } catch (err) {
       console.error(`  Step error: ${err.message}`)
+      const failedAt = new Date()
       results.push({
         scenarioName: displayName,
         status: 'failed',
         error: err.message,
         screenshotPath: null,
+        featureFile: fileName,
+        file: featureRel,
+        startedAt: failedAt.toISOString(),
+        finishedAt: failedAt.toISOString(),
+        durationMs: 0,
+        gherkinSteps,
+        flows: [],
+        steps: buildStepReports(gherkinSteps, []),
       })
       continue
     }
@@ -365,6 +377,10 @@ async function runFeature(featurePath, filterScenarioName, platform, appId, bsCo
     let scenarioStatus = 'passed'
     let scenarioError = null
     let screenshotPath = null
+    /** @type {Array<object>} */
+    const flowResults = []
+    const scenarioStartedMs = Date.now()
+    const startedAt = new Date(scenarioStartedMs).toISOString()
 
     const appName = getAppName(platform)
     const scenarioEnv = {
@@ -382,38 +398,107 @@ async function runFeature(featurePath, filterScenarioName, platform, appId, bsCo
         const result = await runScenarioOnBrowserStack(flowsToRun, scenarioEnv, platform, bsConfig)
         scenarioStatus = result.status
         scenarioError = result.error
+        const durationMs = Date.now() - scenarioStartedMs
+        for (const { flow, params } of flowsToRun) {
+          flowResults.push({
+            flow,
+            title: flow,
+            params: params || {},
+            status: scenarioStatus === 'passed' ? 'passed' : 'failed',
+            durationMs: null,
+            error: scenarioStatus === 'failed' ? scenarioError : null,
+          })
+        }
         if (result.status === 'passed') {
           console.log(`  Scenario "${displayName}" passed on BrowserStack`)
         } else {
           console.error(`  Scenario "${displayName}" failed on BrowserStack: ${result.error}`)
         }
+        const finishedAt = new Date().toISOString()
+        results.push({
+          scenarioName: displayName,
+          status: scenarioStatus,
+          error: scenarioError,
+          screenshotPath: null,
+          featureFile: fileName,
+          file: featureRel,
+          startedAt,
+          finishedAt,
+          durationMs,
+          gherkinSteps,
+          flows: flowResults,
+          steps: buildStepReports(gherkinSteps, flowResults),
+        })
+        continue
       } catch (err) {
         scenarioStatus = 'failed'
         scenarioError = err.message
         console.error(`  BrowserStack error for "${displayName}": ${err.message}`)
+        const finishedAt = new Date().toISOString()
+        results.push({
+          scenarioName: displayName,
+          status: scenarioStatus,
+          error: scenarioError,
+          screenshotPath: null,
+          featureFile: fileName,
+          file: featureRel,
+          startedAt,
+          finishedAt,
+          durationMs: Date.now() - scenarioStartedMs,
+          gherkinSteps,
+          flows: flowResults,
+          steps: buildStepReports(gherkinSteps, flowResults),
+        })
+        continue
       }
     } else {
       for (const { flow: flowName, params: flowParams } of flowsToRun) {
         const env = { ...scenarioEnv, ...flowParams }
+        const flowStartedMs = Date.now()
 
         try {
           await runMaestroFlow(flowName, env, platform)
+          flowResults.push({
+            flow: flowName,
+            title: flowName,
+            params: flowParams || {},
+            status: 'passed',
+            durationMs: Date.now() - flowStartedMs,
+            error: null,
+          })
           process.stdout.write(formatFlowResult(flowName, 'passed'))
         } catch (err) {
           scenarioStatus = 'failed'
           scenarioError = err.message
           screenshotPath = findLatestScreenshot()
+          flowResults.push({
+            flow: flowName,
+            title: flowName,
+            params: flowParams || {},
+            status: 'failed',
+            durationMs: Date.now() - flowStartedMs,
+            error: err.message,
+          })
           console.error(`  Flow "${flowName}" failed: ${err.message}`)
           break
         }
       }
     }
 
+    const finishedAt = new Date().toISOString()
     results.push({
       scenarioName: displayName,
       status: scenarioStatus,
       error: scenarioError,
       screenshotPath,
+      featureFile: fileName,
+      file: featureRel,
+      startedAt,
+      finishedAt,
+      durationMs: Date.now() - scenarioStartedMs,
+      gherkinSteps,
+      flows: flowResults,
+      steps: buildStepReports(gherkinSteps, flowResults),
     })
   }
 
@@ -585,10 +670,20 @@ async function run() {
     for (const r of results) {
       const icon = r.status === 'passed' ? 'PASS' : 'FAIL'
       if (r.status === 'failed') totalFailed++
-      console.log(`  [${icon}] ${r.scenarioName}`)
+      const timing = typeof r.durationMs === 'number' ? ` (${(r.durationMs / 1000).toFixed(1)}s)` : ''
+      console.log(`  [${icon}] ${r.scenarioName}${timing}`)
       if (r.error) console.log(`         Error: ${r.error}`)
       if (r.status === 'failed' && r.screenshotPath) {
         console.log(`         Screenshot: ${r.screenshotPath}`)
+      }
+      if (Array.isArray(r.flows) && r.flows.length > 0) {
+        const flowSummary = r.flows
+          .map(f => {
+            const t = typeof f.durationMs === 'number' ? `${(f.durationMs / 1000).toFixed(1)}s` : '?'
+            return `${f.flow}:${f.status}/${t}`
+          })
+          .join(', ')
+        console.log(`         Flows: ${flowSummary}`)
       }
     }
   }
@@ -606,11 +701,19 @@ async function run() {
       finishedAt,
       perPlatform,
       version: readTemplateVersion(),
+      config: {
+        executor,
+        environment,
+        platforms,
+      },
     })
-    const { jsonPath, xmlPath } = writeReports(summary, reportDir)
+    const { jsonPath, xmlPath, htmlPath } = writeReports(summary, reportDir)
     console.log(`\nReports written:`)
     console.log(`  ${jsonPath}`)
     console.log(`  ${xmlPath}`)
+    console.log(`  ${htmlPath}`)
+    console.log(`  stats: ${summary.stats.expected} passed, ${summary.stats.unexpected} failed, ${(summary.durationMs / 1000).toFixed(1)}s`)
+    console.log(`  Open HTML report: ${htmlPath}`)
   }
 
   process.exit(totalFailed > 0 ? 1 : 0)

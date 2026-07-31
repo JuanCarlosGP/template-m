@@ -2,11 +2,11 @@ appId: ${APP_ID}
 name: WebViewNavigateUrl
 ---
 - tapOn:
-    id: 'com.expandtesting.practice:id/et_url'
+    id: "com.saucelabs.mydemoapp.android:id/urlET"
 - eraseText
-- inputText: '${URL}'
-- hideKeyboard
+- inputText: ${URL}
 - tapOn:
-    id: 'com.expandtesting.practice:id/btn_go'
-- waitForAnimationToEnd:
-    timeout: 5000
+    id: "com.saucelabs.mydemoapp.android:id/goBtn"
+- extendedWaitUntil:
+    visible: ".*Wikipedia.*|.*Encyclopedia.*"
+    timeout: 20000

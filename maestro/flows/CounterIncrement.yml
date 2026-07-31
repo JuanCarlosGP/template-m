@@ -1,7 +1,0 @@
-appId: ${APP_ID}
-name: CounterIncrement
----
-- runFlow:
-    when:
-      platform: Android
-    file: ../android/CounterIncrement.yml

@@ -16,9 +16,23 @@ Harness prose is English; **name screens and copy in Spanish** as shown in the a
 - Booted **iOS simulator** and/or **Android emulator** with the **app installed**
 - `.env` app IDs match the installed build
 
+### Device gate (run first)
+
+```bash
+npm run doctor:device
+```
+
+If exit code ≠ 0 (Devices section has **no** connected device):
+
+1. Return a **hard blocker** report — do not call Maestro MCP `run` / invent UI.
+2. **Do not** proceed to test-planner.
+3. Tell the user to connect a device and re-run.
+
 If no device is available, return a clear blocker — do not invent screen content.
 
 ## MCP workflow
+
+**Only after** `npm run doctor:device` succeeds.
 
 1. **`list_devices`** — pick `device_id` for the platform(s) in scope (or both if planning cross-platform).
 2. **`inspect_screen`** — note current screen after cold start or as-is.
@@ -31,7 +45,7 @@ Prefer MCP over guessing from `APP_SOURCE_DIR` alone — the report must reflect
 
 ## Also check (read-only)
 
-- **`npm run doctor`** output or equivalent: Maestro on PATH, `adb`/`xcrun`, app IDs in `.env`
+- **`npm run doctor:device`** (mandatory gate) then full `npm run doctor` soft warnings if useful
 - **`APP_SOURCE_DIR`** exists (soft warning if missing — selector discovery will be harder)
 - **Existing flows** that might already reach the target screen (`maestro/flows/`, `shared/`, `ios/`, `android/`)
 
@@ -40,8 +54,9 @@ Prefer MCP over guessing from `APP_SOURCE_DIR` alone — the report must reflect
 - **Do not write** feature, flow, or spec files.
 - **Do not run** `npm run feature` or full test flows — only exploratory MCP driving.
 - **Do not commit** or change tracked files.
+- **Do not** hand a “partial” scout to test-planner when the device was never connected or went offline before reaching HU screens — mark **hard blocker** instead.
 - Report **per platform** when iOS and Android differ (copy, ids, navigation).
-- Flag **blockers**: app crash, login wall without credentials, feature behind flag, wrong build.
+- Flag **blockers**: no device, app crash, login wall without credentials, feature behind flag, wrong build.
 
 ## Output
 

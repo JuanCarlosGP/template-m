@@ -1,7 +1,0 @@
-appId: ${APP_ID}
-name: ExpandBankLoginForm
----
-- runFlow:
-    when:
-      platform: Android
-    file: ../android/ExpandBankLoginForm.yml

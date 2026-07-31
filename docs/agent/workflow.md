@@ -15,6 +15,7 @@ For **fixing** an existing failing test, use [`debug-flow/SKILL.md`](debug-flow/
 
 | Requirement | Why |
 |-------------|-----|
+| **`npm run doctor:device` green** | Gate: ≥1 Android/iOS device before scout and before author |
 | Booted simulator/emulator + app installed | `environment-scout`, `selector-explorer`, device runs |
 | **`maestro` MCP** in [`.mcp.json`](../../.mcp.json) | Live hierarchy, screenshots, exploratory taps |
 | **One TMS MCP** (optional) | Fetch issue body / Gherkin — see [`mcp-examples.md`](mcp-examples.md) |
@@ -30,9 +31,13 @@ Device setup: [`docs/DEVICE.md`](../DEVICE.md).
 │ Issue / HU  │
 └──────┬──────┘
        ▼
+┌─────────────────────┐     npm run doctor:device — STOP if Devices empty
+│ 0. device gate      │
+└──────┬──────────────┘
+       ▼
 ┌─────────────────────┐     Maestro MCP: list_devices, inspect_screen,
 │ 1. environment-scout │     launch app, navigate toward HU screens
-└──────┬──────────────┘
+└──────┬──────────────┘     (hard blocker ⇒ no planner)
        ▼
 ┌─────────────────────┐     TMS MCP + suite + APP_SOURCE_DIR + scout report
 │ 2. test-planner      │ ──► e2e-specs/specs/<id>.md
@@ -42,9 +47,9 @@ Device setup: [`docs/DEVICE.md`](../DEVICE.md).
 │ 3. User confirms    │     Quick OK on plan / Gherkin / drop-MSW decisions
 └──────┬──────────────┘
        ▼
-┌─────────────────────┐     feature, step-defs, flows (selector-explorer)
-│ 4. author (build)   │     npm run validate after edits
-└──────┬──────────────┘
+┌─────────────────────┐     npm run doctor:device again — STOP if no device
+│ 4. author (build)   │     feature, step-defs, flows (selector-explorer)
+└──────┬──────────────┘     npm run validate after edits
        ▼
 ┌─────────────────────┐     npm run feature / flow:* — bounded retries
 │ 5. execute          │
@@ -98,14 +103,15 @@ Shared limits — do not loop forever:
 | Artifact | Location |
 |----------|----------|
 | Test plan | `e2e-specs/specs/<id>.md` |
-| Executable test | `maestro/features/`, `step-definitions/`, `flows/` |
+| Executable test | `maestro/features/`, `step-definitions/<area|common>.json`, `flows/` |
 | Run results | `reports/summary.json`, `reports/junit.xml` |
 | Draft PR | via `committing` (optional) |
 
 ## Entry commands (human)
 
 ```bash
-npm run doctor          # before first device run
+npm run doctor          # preflight (device soft-warn)
+npm run doctor:device   # agent gate: fail if Devices empty
 npm run validate        # after authoring edits
 npm run feature -- --feature maestro/features/<Area>.feature --platform all --no-publish
 ```

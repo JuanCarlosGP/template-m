@@ -278,13 +278,11 @@
       <h2>Un paso Gherkin, varios YAML</h2>
       <div class="card">
         <div class="card-body">
-          <p class="muted">Ejemplo: <code>Cuando incremento el contador 3 veces</code></p>
+          <p class="muted">Ejemplo: <code>Given abro My Demo App en la pantalla principal</code></p>
           <hr class="divider" />
           <div class="tree">
-            <div class="branch depth-0"><span class="swatch blue"></span><div><code>step-definitions/appium-practice.json</code><br /><span class="muted">pattern → CounterIncrement</span></div></div>
-            <div class="branch depth-1"><span class="swatch purple"></span><div><code>flows/CounterIncrement.yml</code><br /><span class="muted">entry: runFlow shared</span></div></div>
-            <div class="branch depth-2"><span class="swatch green"></span><div><code>shared/CounterIncrement.yml</code><br /><span class="muted">when platform → rama</span></div></div>
-            <div class="branch depth-3"><span class="swatch orange"></span><div><code>android/CounterIncrement.yml</code><br /><span class="muted">tap + assert en device</span></div></div>
+            <div class="branch depth-0"><span class="swatch blue"></span><div><code>step-definitions/common.json</code><br /><span class="muted">pattern → OpenApp</span></div></div>
+            <div class="branch depth-1"><span class="swatch purple"></span><div><code>flows/OpenApp.yml</code><br /><span class="muted">launchApp clearState</span></div></div>
           </div>
         </div>
       </div>
@@ -295,14 +293,14 @@
       <table>
         <thead><tr><th>Carpeta</th><th>Qué es</th><th>Ejemplo</th></tr></thead>
         <tbody>
-          <tr><td><code>maestro/features/</code></td><td>Escenarios Gherkin</td><td>AppiumPracticeCounter.feature</td></tr>
-          <tr><td><code>maestro/step-definitions/</code></td><td>Paso → flow</td><td>appium-practice.json</td></tr>
-          <tr><td><code>maestro/flows/</code></td><td>Entrada por nombre</td><td>CounterIncrement.yml</td></tr>
-          <tr><td><code>maestro/shared/</code></td><td>Lógica común</td><td>CounterIncrement.yml</td></tr>
-          <tr><td><code>maestro/android/</code></td><td>Selectores Android</td><td>CounterIncrement.yml</td></tr>
-          <tr><td><code>maestro/ios/</code></td><td>Selectores iOS</td><td>DemoLogin.yml</td></tr>
+          <tr><td><code>maestro/features/</code></td><td>Escenarios Gherkin</td><td>(añadir al crear escenarios)</td></tr>
+          <tr><td><code>maestro/step-definitions/</code></td><td>Paso → flow</td><td>common.json, auth.json, …</td></tr>
+          <tr><td><code>maestro/flows/</code></td><td>Entrada por nombre</td><td>OpenApp.yml</td></tr>
+          <tr><td><code>maestro/shared/</code></td><td>Lógica común</td><td>AssertVisibleText.yml</td></tr>
+          <tr><td><code>maestro/android/</code></td><td>Selectores Android</td><td>(por escenario)</td></tr>
+          <tr><td><code>maestro/ios/</code></td><td>Selectores iOS</td><td>(por escenario)</td></tr>
           <tr><td><code>maestro/scripts/</code></td><td>Runner y validación</td><td>gherkin-runner.js</td></tr>
-          <tr><td><code>e2e-specs/specs/</code></td><td>Spec manual → auto</td><td>manual-counter.md</td></tr>
+          <tr><td><code>e2e-specs/specs/</code></td><td>Spec manual → auto</td><td>(por issue/HU)</td></tr>
         </tbody>
       </table>
     </section>
@@ -310,23 +308,23 @@
     <section class="section grid-3">
       <div class="card">
         <div class="card-body">
-          <div class="row"><span class="swatch blue"></span><strong>Expand Bank</strong></div>
-          <p><code>feature:expand-bank-login</code></p>
-          <span class="pill tag">Login</span>
+          <div class="row"><span class="swatch blue"></span><strong>My Demo App</strong></div>
+          <p><code>com.saucelabs.mydemoapp.android</code></p>
+          <span class="pill tag">Sauce Labs</span>
         </div>
       </div>
       <div class="card">
         <div class="card-body">
-          <div class="row"><span class="swatch blue"></span><strong>Counter</strong></div>
-          <p><code>feature:counter</code></p>
-          <span class="pill tag">UI state</span>
+          <div class="row"><span class="swatch blue"></span><strong>OpenApp</strong></div>
+          <p><code>flows/OpenApp.yml</code></p>
+          <span class="pill tag">Launch</span>
         </div>
       </div>
       <div class="card">
         <div class="card-body">
-          <div class="row"><span class="swatch blue"></span><strong>WebView</strong></div>
-          <p><code>feature:webview</code></p>
-          <span class="pill tag">Navegación</span>
+          <div class="row"><span class="swatch blue"></span><strong>AssertVisibleText</strong></div>
+          <p><code>veo el texto "…"</code></p>
+          <span class="pill tag">Assert</span>
         </div>
       </div>
     </section>

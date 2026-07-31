@@ -1,5 +1,0 @@
-appId: ${APP_ID}
-name: CounterReset
----
-- tapOn:
-    id: 'com.expandtesting.practice:id/btn_reset'

@@ -11,15 +11,37 @@ Input: **issue / HU / work item ID** (GitHub, GitLab, Azure DevOps, or manual sl
 
 Harness prose is English; **generated Gherkin, specs, and branch slugs stay in Spanish**.
 
+## Phase −1 — Device gate (mandatory)
+
+**Before** environment-scout and **again before** authoring (Phase 2) after the user confirms the plan:
+
+```bash
+npm run doctor:device
+```
+
+This is `doctor --require-device`: the **Devices** section must show at least one connected Android `device` or booted iOS simulator. Exit code **0** = proceed; **non-zero** = **STOP**.
+
+If it fails:
+
+1. Tell the user there is **no device** — do not invent screens or selectors.
+2. **Do not** run environment-scout, test-planner, or write `e2e-specs` / `maestro/**`.
+3. Ask them to connect a device (`adb devices -l` / wireless debugging / emulator) and re-run `/author-e2e-test`.
+
+No device ⇒ no scout ⇒ no plan ⇒ no author. Partial scout because the device dropped mid-run is also a **hard stop** before planning or authoring.
+
 ## Phase 0 — Environment reconnaissance
+
+**Only after** `npm run doctor:device` succeeds.
 
 Launch **environment-scout** ([`agents/environment-scout.md`](../agents/environment-scout.md)) with the issue title and acceptance criteria (or Gherkin hint).
 
 Requires **`maestro` MCP** and a booted device with the app installed ([`docs/DEVICE.md`](../../DEVICE.md)).
 
-If scout reports a **hard blocker** (no device, app won't launch), stop and tell the user — do not write flows.
+If scout reports a **hard blocker** (no device, app won't launch, device goes offline), stop and tell the user — **do not** run test-planner or write flows.
 
 ## Phase 1 — Test plan (test-planner → e2e-spec)
+
+**Only after** a successful scout (not skipped, not blocked).
 
 Launch **test-planner** ([`agents/test-planner.md`](../agents/test-planner.md)) with:
 
@@ -33,10 +55,17 @@ The spec is the **source of truth** for phases 2–6. Read Gherkin and acceptanc
 
 ## Phase 2 — Map to the suite structure
 
+**Re-run** `npm run doctor:device`. If it fails, stop — do not author features/flows until a device is back.
+
 From the spec's **Plan de automatización**:
 
 1. Create or extend `maestro/features/<Area>.feature` with the Gherkin scenarios.
-2. For each step, match `step-definitions/*.json` (**longest pattern wins**). Add new entries only for new steps; `"flow": null` for inline preconditions/assertions.
+2. For each step, match `step-definitions/*.json` (**longest pattern wins**).
+   - **Reuse** an existing pattern when it already fits — do not duplicate.
+   - **New step for an existing area** → add it to that area's JSON (e.g. `auth.json`).
+   - **New feature area** → create `step-definitions/<area>.json`; do not dump everything into one file.
+   - **Shared** navigation/assertions (`OpenApp`, `AssertVisibleText`, …) → `common.json`.
+   - Prefer one Gherkin step when a flow already does several UI actions (e.g. `abro el menú y pulso "X"` → open drawer + tap). Use `"flow": null` only for true documentary preconditions, not to duplicate that work.
 3. Parameterised steps: regex `pattern` + `params` → `--env` vars.
 
 Run `npm run validate` after edits.

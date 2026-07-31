@@ -1,7 +1,0 @@
-appId: ${APP_ID}
-name: AssertCounterValue
----
-- runFlow:
-    when:
-      platform: Android
-    file: ../android/AssertCounterValue.yml
