@@ -10,7 +10,7 @@
     "validate": "node maestro/scripts/validate.js",
     "doctor": "node maestro/scripts/doctor.js",
     "doctor:device": "node maestro/scripts/doctor.js --require-device",
-    "test": "node --test maestro/scripts/lib/azure-env.test.js maestro/scripts/lib/gherkin.test.js maestro/scripts/lib/step-defs.test.js maestro/scripts/lib/write-reports.test.js maestro/scripts/lib/runner-output.test.js maestro/scripts/lib/maestro-output.test.js maestro/scripts/lib/flow-step-plan.test.js maestro/scripts/lib/resolve-maestro-bin.test.js maestro/scripts/lib/doctor-devices.test.js",
+    "test": "node --test maestro/scripts/lib/azure-env.test.js maestro/scripts/lib/gherkin.test.js maestro/scripts/lib/step-defs.test.js maestro/scripts/lib/write-reports.test.js maestro/scripts/lib/runner-output.test.js maestro/scripts/lib/maestro-output.test.js maestro/scripts/lib/flow-step-plan.test.js maestro/scripts/lib/resolve-maestro-bin.test.js maestro/scripts/lib/doctor-devices.test.js maestro/scripts/publish-results.test.js",
     "check": "node maestro/scripts/check.js",
     "gherkin-extract": "node maestro/scripts/gherkin-dictionary/extract.js",
     "feature": "node maestro/scripts/gherkin-runner.js",

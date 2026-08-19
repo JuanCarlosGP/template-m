@@ -18,6 +18,7 @@
 const { execFileSync, execSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
+require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') })
 const { listConnectedDevices } = require('./lib/doctor-devices')
 
 const ROOT = path.join(__dirname, '..', '..')
@@ -84,8 +85,9 @@ try {
   warn('Azure DevOps MCP server not installed locally — `npm install` will fetch it (npx falls back to network)')
 }
 
-const maestro = run('maestro --version')
-maestro ? ok(`Maestro CLI ${maestro}`) : fail('Maestro CLI not found — run `npm run setup` or install manually (https://docs.maestro.dev/getting-started/installing-maestro)')
+const maestroCommand = process.env.MAESTRO_CLI ? `"${process.env.MAESTRO_CLI}"` : 'maestro'
+const maestro = run(`${maestroCommand} --version`)
+maestro ? ok(`Maestro CLI ${maestro}`) : fail('Maestro CLI not found — run `npm run setup` or install manually (https://docs.maestro.dev/maestro-cli/how-to-install-maestro-cli)')
 
 // --- Platform tooling ---------------------------------------------------------
 console.log('\nPlatform tooling:')

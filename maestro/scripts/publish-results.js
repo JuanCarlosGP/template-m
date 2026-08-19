@@ -14,6 +14,11 @@ function getAuthHeader() {
   return 'Basic ' + Buffer.from(':' + pat).toString('base64')
 }
 
+function getRequestTimeoutMs() {
+  const configured = Number(process.env.AZURE_REQUEST_TIMEOUT_MS)
+  return Number.isFinite(configured) && configured > 0 ? configured : 30000
+}
+
 function request(options, body) {
   return new Promise((resolve, reject) => {
     const req = https.request(options, res => {
@@ -30,6 +35,9 @@ function request(options, body) {
           resolve(data)
         }
       })
+    })
+    req.setTimeout(getRequestTimeoutMs(), () => {
+      req.destroy(new Error(`Azure DevOps request timed out after ${getRequestTimeoutMs()}ms`))
     })
     req.on('error', reject)
     if (body) {
@@ -243,4 +251,4 @@ async function publishResults(results, opts = {}) {
   }
 }
 
-module.exports = { publishResults, fetchSuiteTestCases }
+module.exports = { publishResults, fetchSuiteTestCases, getRequestTimeoutMs }

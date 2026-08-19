@@ -56,7 +56,7 @@ Your IDE loads every server in `.mcp.json` at startup — unused or misconfigure
 
 Already in `.mcp.json`. Required only for `selector-explorer` and live debugging in `author-e2e-test`.
 
-**Windows native** — point `command` at your install, e.g. `${USERPROFILE}\\.maestro\\bin\\maestro.bat` ([Maestro install](https://docs.maestro.dev/getting-started/installing-maestro)).
+**Windows native** — point `command` at your install, e.g. `${USERPROFILE}\\.maestro\\bin\\maestro.bat` ([Maestro install](https://docs.maestro.dev/maestro-cli/how-to-install-maestro-cli)).
 
 ---
 

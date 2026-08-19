@@ -12,10 +12,14 @@ const os = require('os')
 const path = require('path')
 
 const MAESTRO_VERSION = '2.6.0'
-const MAESTRO_DOCS = 'https://docs.maestro.dev/getting-started/installing-maestro'
+const MAESTRO_DOCS = 'https://docs.maestro.dev/maestro-cli/how-to-install-maestro-cli'
 
 const maestroBinDir = path.join(os.homedir(), '.maestro', 'bin')
 const maestroBin = path.join(maestroBinDir, process.platform === 'win32' ? 'maestro.bat' : 'maestro')
+const windowsMaestroCandidates = [
+  path.join('C:', 'maestro', 'maestro', 'bin', 'maestro.bat'),
+  path.join('C:', 'maestro', 'bin', 'maestro.bat'),
+]
 
 function parseArgs(argv) {
   return {
@@ -39,12 +43,20 @@ function run(cmd, opts = {}) {
   }
 }
 
-function getInstalledVersion() {
+function getInstalledVersion(binary = 'maestro') {
   const env = { ...process.env, PATH: maestroPathEnv() }
-  const out = run('maestro --version', { env })
+  const command = /\.(bat|cmd)$/i.test(binary) ? `"${binary}" --version` : `${binary} --version`
+  const out = run(command, { env })
   if (!out) return null
   const line = out.split('\n').pop().trim()
   return line || null
+}
+
+function findWindowsMaestro() {
+  if (process.platform !== 'win32') return null
+  const configured = process.env.MAESTRO_CLI
+  const candidates = configured ? [configured, ...windowsMaestroCandidates] : windowsMaestroCandidates
+  return candidates.find(candidate => fs.existsSync(candidate)) || run('where maestro')
 }
 
 function versionMatches(installed) {
@@ -60,7 +72,7 @@ function printWindowsInstructions() {
   console.log(`  ${MAESTRO_DOCS}`)
   console.log('')
   console.log('After install, verify with:  maestro --version')
-  console.log('Optional: set MAESTRO_CLI in .env to the full path of the binary.')
+  console.log('Optional: set MAESTRO_CLI in .env to the full path of maestro.bat.')
 }
 
 function installUnix() {
@@ -98,8 +110,9 @@ function main() {
   }
 
   if (process.platform === 'win32') {
-    if (fs.existsSync(maestroBin) || run('where maestro')) {
-      const ver = getInstalledVersion()
+    const windowsMaestro = fs.existsSync(maestroBin) ? maestroBin : findWindowsMaestro()
+    if (windowsMaestro) {
+      const ver = getInstalledVersion(windowsMaestro)
       if (ver) {
         console.log(`Maestro CLI found (${ver}). Expected ${MAESTRO_VERSION}.`)
         console.log('Upgrade manually if needed — see docs.')
@@ -133,4 +146,4 @@ if (require.main === module) {
   main()
 }
 
-module.exports = { MAESTRO_VERSION, MAESTRO_DOCS, getInstalledVersion, versionMatches }
+module.exports = { MAESTRO_VERSION, MAESTRO_DOCS, getInstalledVersion, versionMatches, findWindowsMaestro }

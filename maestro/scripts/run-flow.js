@@ -70,7 +70,7 @@ async function main() {
     await execMaestroSync(maestroArgs, { cwd, flowFile })
   } catch (err) {
     if (err && (err.code === 'ENOENT' || err.errno === -4058)) {
-      console.error('Maestro CLI not found. Run npm run setup or set MAESTRO_CLI in .env (https://docs.maestro.dev/getting-started/installing-maestro)')
+      console.error('Maestro CLI not found. Run npm run setup or set MAESTRO_CLI in .env (https://docs.maestro.dev/maestro-cli/how-to-install-maestro-cli)')
     }
     process.exit(err.status || 1)
   }

@@ -105,8 +105,28 @@ Detalle del pipeline: [`docs/agent/workflow.md`](docs/agent/workflow.md). Dispos
 ## Requisitos
 
 - **Node.js 20+**
-- **Maestro CLI** — instalado por `npm run setup` en macOS/Linux; en Windows nativo, instalar manualmente ([docs Maestro](https://docs.maestro.dev/getting-started/installing-maestro))
+- **Maestro CLI** — instalado por `npm run setup` en macOS/Linux; en Windows nativo, instalar manualmente ([docs Maestro](https://docs.maestro.dev/maestro-cli/how-to-install-maestro-cli))
 - Para ejecución en dispositivo: simulador iOS o emulador Android con la app instalada (Android Studio / Xcode)
+
+### Maestro en Windows
+
+Después de extraer Maestro, añade su carpeta `bin` al `PATH` de usuario:
+
+```text
+C:\maestro\maestro\bin
+```
+
+Abre una terminal nueva y verifica la instalación:
+
+```powershell
+maestro --version
+```
+
+Si no puedes modificar el `PATH`, configura la ruta completa del lanzador en `.env`:
+
+```env
+MAESTRO_CLI=C:\maestro\maestro\bin\maestro.bat
+```
 
 
 

@@ -97,6 +97,14 @@ xcrun simctl install booted build/ios/DemoApp.app
 
 ## Maestro CLI
 
-Installed via `npm run setup` on macOS/Linux, or manually on Windows: [Maestro docs](https://docs.maestro.dev/getting-started/installing-maestro).
+Installed via `npm run setup` on macOS/Linux, or manually on Windows: [Maestro docs](https://docs.maestro.dev/maestro-cli/how-to-install-maestro-cli).
+
+On Windows, the recommended setup is to add the Maestro `bin` directory to the user `PATH`:
+
+```text
+C:\maestro\maestro\bin
+```
+
+Open a new terminal and verify it with `maestro --version`. If changing `PATH` is not possible, set `MAESTRO_CLI` in `.env` to the full path of `maestro.bat` instead.
 
 Pinned version: see `MAESTRO_VERSION` in [`maestro/scripts/install-maestro.js`](../maestro/scripts/install-maestro.js).
