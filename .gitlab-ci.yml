@@ -1,0 +1,3 @@
+# GitLab CI: quality gate without device or emulator.
+include:
+  - local: '/integrations/gitlab-ci/headless.yml'
