@@ -7,6 +7,9 @@ stages:
 e2e-headless:
   stage: test
   image: node:20
+  before_script:
+    # @azure-devops/mcp configures npm during install; the runner's /root may be read-only.
+    - export NPM_CONFIG_USERCONFIG="$CI_PROJECT_DIR/.npmrc"
   script:
     - npm ci
     - npm run check
