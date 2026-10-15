@@ -20,8 +20,9 @@ Plantilla del framework de tests E2E con **Maestro** y **Gherkin**. App de demo:
 Gherkin, step-definitions, flows Maestro, runner y validación estática. Funciona sin Azure ni CI concreto; los escenarios contra My Demo App requieren dispositivo Android con la app instalada.
 
 ```
-features/ ──► gherkin-runner.js ──► step-definitions/ ──► flows/*.yml ──► dispositivo
-                    │
+features/ ──► gherkin-runner.js ──► step-definitions/ ──► shared/<área>/*.yml ──► dispositivo
+                    │                         │
+                    │                         └──► maestro/.tmp/scenarios/  (un YAML por escenario)
                     └──► reports/summary.json + junit.xml  (post-ejecución)
 ```
 
@@ -198,7 +199,7 @@ App open-source de Sauce Labs — Android. Package ID: `com.saucelabs.mydemoapp.
 | Repositorio | [saucelabs/my-demo-app-android](https://github.com/saucelabs/my-demo-app-android) |
 | `ANDROID_APP_ID` | `com.saucelabs.mydemoapp.android` |
 | Step-definitions | `maestro/step-definitions/{common,auth,webview,about}.json` |
-| Flow base | `maestro/flows/OpenApp.yml` |
+| Flow base | `maestro/shared/common/OpenApp.yml` |
 
 **Prerrequisitos:** dispositivo o emulador Android, My Demo App instalada (APK desde [releases](https://github.com/saucelabs/my-demo-app-android/releases)), `.env` con `ANDROID_APP_ID=com.saucelabs.mydemoapp.android` y `ANDROID_SERIAL` si aplica. Ver [`docs/DEVICE.md`](docs/DEVICE.md).
 
@@ -210,7 +211,7 @@ Al hacer fork de la template, añade tests de **tu** app siguiendo el mismo patr
 
 | Acción | Qué hacer |
 |--------|-----------|
-| **Añadir** | `features/`, `step-definitions/<area>.json`, flows en `flows/` (+ `android/` / `ios/` si aplica) |
+| **Añadir** | `features/`, `step-definitions/<area>.json`, flows en `shared/<área>/` (+ `android/` / `ios/` si aplica) |
 | **Configurar** | `.env` (app IDs, `APP_SOURCE_DIR`, `ANDROID_SERIAL`); Azure solo si publicas en Test Plans |
 | **Conservar** | Estructura de carpetas, `npm run check`, ejemplos CI en [`integrations/`](integrations/README.md) |
 | **Opcional** | Agente IA: `docs/agent/`, `e2e-specs/`, [`.mcp.json`](.mcp.json) + [`mcp-examples.md`](docs/agent/mcp-examples.md); BrowserStack; publicación Azure |
@@ -229,19 +230,22 @@ npm test
 npm run validate
 npm run doctor
 npm run feature -- --feature maestro/features/<TuFeature>.feature --platform android --no-publish
-npm run flow:android -- --flow maestro/flows/OpenApp.yml
+npm run flow:android -- --flow maestro/shared/common/OpenApp.yml
+npm run compose -- --feature maestro/features/MyDemoAppAuth.feature
 npm run gherkin-extract
 npm run gherkin-report
 ```
 
 Pasa `--no-publish` al runner para no publicar en Azure.
 
-Tras un run con el runner, revisa `reports/summary.json` y `reports/junit.xml` (desactivar con `--no-reports`).
+El runner compone por defecto: un YAML por escenario en `maestro/.tmp/scenarios/`, y en local un solo `maestro test` con todos. `--per-flow` vuelve al bucle de un CLI por flow.
+
+Tras un run con el runner, revisa `reports/summary.json`, `reports/junit.xml` y `reports/index.html` (desactivar con `--no-reports`). La captura de pantalla se guarda solo si el escenario falla (`reports/screenshots/`).
 
 Suite completa desde Azure Test Plans (opcional):
 
 ```bash
-node maestro/scripts/gherkin-runner.js --from-suite --platform all --no-publish
+npx tsx maestro/scripts/gherkin-runner.ts --from-suite --platform all --no-publish
 ```
 
 (`AZURE_TEST_PLAN_ID` y `AZURE_TEST_SUITE_ID` en `.env`, o `--plan-id` / `--suite-id` en CLI.)
@@ -308,7 +312,8 @@ izertis-maestro-template/
 ├── reports/               # resultados (gitignored)
 └── maestro/
     ├── features/
-    ├── flows/ shared/ ios/ android/
+    ├── shared/            # entradas por área (common, auth, webview, about)
+    ├── android/ ios/      # chrome del sistema operativo
     ├── step-definitions/
     └── scripts/
         ├── hooks/         # hooks IDE opcionales

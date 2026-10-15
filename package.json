@@ -3,21 +3,24 @@
   "version": "0.3.4",
   "description": "Izertis Maestro Template — E2E framework with Maestro and Gherkin",
   "private": true,
+  "type": "module",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "validate": "node maestro/scripts/validate.js",
-    "doctor": "node maestro/scripts/doctor.js",
-    "doctor:device": "node maestro/scripts/doctor.js --require-device",
-    "test": "node --test maestro/scripts/lib/azure-env.test.js maestro/scripts/lib/gherkin.test.js maestro/scripts/lib/step-defs.test.js maestro/scripts/lib/write-reports.test.js maestro/scripts/lib/runner-output.test.js maestro/scripts/lib/maestro-output.test.js maestro/scripts/lib/flow-step-plan.test.js maestro/scripts/lib/resolve-maestro-bin.test.js maestro/scripts/lib/doctor-devices.test.js maestro/scripts/publish-results.test.js",
-    "check": "node maestro/scripts/check.js",
-    "gherkin-extract": "node maestro/scripts/gherkin-dictionary/extract.js",
-    "feature": "node maestro/scripts/gherkin-runner.js",
-    "flow:android": "node maestro/scripts/run-flow.js --platform android",
-    "flow:ios": "node maestro/scripts/run-flow.js --platform ios",
-    "setup": "node maestro/scripts/setup.js",
-    "gherkin-report": "node maestro/scripts/gherkin-report.js"
+    "validate": "tsx maestro/scripts/validate.ts",
+    "doctor": "tsx maestro/scripts/doctor.ts",
+    "doctor:device": "tsx maestro/scripts/doctor.ts --require-device",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test maestro/scripts/lib/azure-env.test.ts maestro/scripts/lib/gherkin.test.ts maestro/scripts/lib/step-defs.test.ts maestro/scripts/lib/write-reports.test.ts maestro/scripts/lib/runner-output.test.ts maestro/scripts/lib/maestro-output.test.ts maestro/scripts/lib/flow-step-plan.test.ts maestro/scripts/lib/resolve-maestro-bin.test.ts maestro/scripts/lib/doctor-devices.test.ts maestro/scripts/publish-results.test.ts maestro/scripts/lib/compose-flows.test.ts maestro/scripts/lib/compose-scenario.test.ts maestro/scripts/lib/composite-mode.test.ts maestro/scripts/lib/attribute-composite.test.ts maestro/scripts/lib/capture-screenshot.test.ts maestro/scripts/lib/gherkin-scenarios.test.ts",
+    "compose": "tsx maestro/scripts/compose-flows.ts",
+    "check": "tsx maestro/scripts/check.ts",
+    "gherkin-extract": "tsx maestro/scripts/gherkin-dictionary/extract.ts",
+    "feature": "tsx maestro/scripts/gherkin-runner.ts",
+    "flow:android": "tsx maestro/scripts/run-flow.ts --platform android",
+    "flow:ios": "tsx maestro/scripts/run-flow.ts --platform ios",
+    "setup": "tsx maestro/scripts/setup.ts",
+    "gherkin-report": "tsx maestro/scripts/gherkin-report.ts"
   },
   "dependencies": {
     "@cucumber/gherkin": "^27.0.0",
@@ -26,6 +29,9 @@
   },
   "devDependencies": {
     "@azure-devops/mcp": "^2.7.0",
-    "http-server": "^14.1.1"
+    "@types/node": "^22.20.5",
+    "http-server": "^14.1.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
   }
 }

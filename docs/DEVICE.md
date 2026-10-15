@@ -27,7 +27,7 @@ npm run validate
 npm run doctor
 npm run doctor:device
 npm run feature -- --feature maestro/features/<Area>.feature --platform android --no-publish
-npm run flow:android -- --flow maestro/flows/OpenApp.yml
+npm run flow:android -- --flow maestro/shared/common/OpenApp.yml
 npm run gherkin-extract
 npm run gherkin-report
 ```
@@ -35,7 +35,7 @@ npm run gherkin-report
 ## Azure suite (full plan)
 
 ```bash
-node maestro/scripts/gherkin-runner.js \
+npx tsx maestro/scripts/gherkin-runner.ts \
   --from-suite \
   --platform all \
   --no-publish

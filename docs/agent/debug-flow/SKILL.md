@@ -14,8 +14,8 @@ it, confirm green on device, and commit via the **committing** playbook.
    ```bash
    npm run feature -- --feature maestro/features/<Area>.feature --platform <plat> --no-publish
    # or, faster, the single flow:
-   npm run flow:ios -- --flow maestro/flows/<Name>.yml
-   npm run flow:android -- --flow maestro/flows/<Name>.yml
+   npm run flow:ios -- --flow maestro/shared/<area>/<Name>.yml
+   npm run flow:android -- --flow maestro/shared/<area>/<Name>.yml
    ```
 2. Note the **exact failing step** and the **screenshot** the runner reports
    (`findLatestScreenshot` prints the path; also under `~/.maestro/tests/`). Read it.

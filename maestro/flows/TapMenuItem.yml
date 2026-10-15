@@ -1,7 +1,0 @@
-appId: ${APP_ID}
-name: TapMenuItem
----
-- runFlow:
-    when:
-      platform: Android
-    file: ../android/TapMenuItem.yml

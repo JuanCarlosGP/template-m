@@ -441,7 +441,7 @@
         ? 'bg-blue-50 text-blue-800 border-blue-200'
         : 'bg-slate-100 text-slate-500 border-slate-200';
       const title = executes
-        ? (maestroFlowPath || `Ejecuta maestro/flows/${displayFlow}.yml`)
+        ? (maestroFlowPath || `Ejecuta maestro/shared/${displayFlow}.yml`)
         : `Paso del escenario; implementado dentro del flow ${displayFlow}`;
       return html`<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border shrink-0 ${className}" title=${title}>Flow: ${displayFlow}</span>`;
     };

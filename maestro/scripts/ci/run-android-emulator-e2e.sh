@@ -26,12 +26,12 @@ else
   echo "No ${HOME}/.maestro/tests directory (no Maestro run artifacts)"
 fi
 
-node maestro/scripts/ci/write-summary.js
+node --import tsx maestro/scripts/ci/write-summary.ts
 
 if [ "${FEATURE_EXIT}" -ne 0 ] && [ -n "${AGENT_API_KEY:-}" ]; then
   echo "Running report-only agent triage (Maestro MCP while device is up)..."
   # Soft-fail: triage must not hide the real E2E exit code.
-  node maestro/scripts/ci/triage-failure.js || echo "Triage step returned non-zero (ignored)"
+  node --import tsx maestro/scripts/ci/triage-failure.ts || echo "Triage step returned non-zero (ignored)"
 fi
 
 exit "${FEATURE_EXIT}"

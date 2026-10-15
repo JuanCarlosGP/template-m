@@ -47,7 +47,7 @@ Prefer MCP over guessing from `APP_SOURCE_DIR` alone — the report must reflect
 
 - **`npm run doctor:device`** (mandatory gate) then full `npm run doctor` soft warnings if useful
 - **`APP_SOURCE_DIR`** exists (soft warning if missing — selector discovery will be harder)
-- **Existing flows** that might already reach the target screen (`maestro/flows/`, `shared/`, `ios/`, `android/`)
+- **Existing flows** that might already reach the target screen (`maestro/shared/<area>/`, `ios/`, `android/`)
 
 ## Rules
 

@@ -103,7 +103,7 @@ Shared limits — do not loop forever:
 | Artifact | Location |
 |----------|----------|
 | Test plan | `e2e-specs/specs/<id>.md` |
-| Executable test | `maestro/features/`, `step-definitions/<area|common>.json`, `flows/` |
+| Executable test | `maestro/features/`, `step-definitions/<area|common>.json`, `shared/<area>/` |
 | Run results | `reports/summary.json`, `reports/junit.xml` |
 | Draft PR | via `committing` (optional) |
 

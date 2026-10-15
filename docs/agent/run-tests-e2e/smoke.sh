@@ -6,8 +6,8 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 echo "=== validate ==="
-node maestro/scripts/validate.js
+node --import tsx maestro/scripts/validate.ts
 
 echo ""
 echo "=== doctor ==="
-node maestro/scripts/doctor.js
+node --import tsx maestro/scripts/doctor.ts

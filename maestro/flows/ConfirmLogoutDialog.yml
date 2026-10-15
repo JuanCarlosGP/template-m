@@ -1,7 +1,0 @@
-appId: ${APP_ID}
-name: ConfirmLogoutDialog
----
-- runFlow:
-    when:
-      platform: Android
-    file: ../android/ConfirmLogoutDialog.yml

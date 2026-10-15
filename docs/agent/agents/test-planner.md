@@ -76,7 +76,7 @@ Harness prose is English; **the spec you write is in Spanish** (matching the tic
 ## Plan de automatización
 - Feature: `maestro/features/<Area>.feature`
 - Step-definitions: `step-definitions/<area>.json` y/o `common.json` (nuevos: <...> | reutiliza: <...>)
-- Flows: `flows/<Name>.yml` (+ shared/ios/android según convenga)
+- Flows: `shared/<area>/<Name>.yml` (+ ios/android solo para chrome del SO)
 - Reutiliza: <flows/pasos existentes>
 
 ## Cobertura por plataforma

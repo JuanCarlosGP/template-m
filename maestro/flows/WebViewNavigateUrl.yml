@@ -1,7 +1,0 @@
-appId: ${APP_ID}
-name: WebViewNavigateUrl
----
-- runFlow:
-    when:
-      platform: Android
-    file: ../android/WebViewNavigateUrl.yml

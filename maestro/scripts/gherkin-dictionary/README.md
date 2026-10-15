@@ -91,7 +91,7 @@ Incluye búsqueda, filtros por tipo (Given/When/Then…), **Constructor Gherkin*
 | `maestro/features/` | Escenarios Gherkin (fuente del diccionario) |
 | `maestro/step-definitions/*.json` | Patrones → nombre de flow Maestro |
 | `maestro/step-definitions/index.js` | Resolución de pasos (runner + enricher) |
-| `maestro/flows/`, `maestro/shared/` | Flows `.yml` referenciados en definiciones |
+| `maestro/shared/<área>/` | Flows `.yml` referenciados en definiciones |
 | `gherkin-runner.js` | Ejecuta tests; no forma parte de este módulo |
 
 El diccionario reutiliza la misma lógica de matching que el runner (`resolveStepSafe`, orden por longitud de pattern).

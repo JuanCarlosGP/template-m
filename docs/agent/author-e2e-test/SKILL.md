@@ -75,7 +75,7 @@ Run `npm run validate` after edits.
 For every **new** flow:
 
 1. Launch **selector-explorer** ([`agents/selector-explorer.md`](../agents/selector-explorer.md)) for real selectors — **iOS and Android** — using scout + spec hints.
-2. Create `flows/`, `shared/`, `ios/`, `android/` YAML per suite conventions (`appId: ${APP_ID}`, platform branch when needed).
+2. Create `shared/<area>/` YAML (and `ios/` / `android/` only for OS chrome) per suite conventions (`appId: ${APP_ID}`, platform branch when needed). Step-def `flow` is `<area>/<Name>`.
 3. Reuse existing flows (`Login`, `AcceptPermissions`, etc.) where the spec says so.
 
 Run `npm run validate` before device.

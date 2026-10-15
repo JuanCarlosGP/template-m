@@ -44,7 +44,7 @@ npm run validate
 npm run doctor
 
 # Example: launch My Demo App directly
-npm run flow:android -- --flow maestro/flows/OpenApp.yml
+npm run flow:android -- --flow maestro/shared/common/OpenApp.yml
 
 # Single feature (generic)
 npm run feature -- --feature maestro/features/<Area>.feature --platform android --no-publish

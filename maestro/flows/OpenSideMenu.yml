@@ -1,7 +1,0 @@
-appId: ${APP_ID}
-name: OpenSideMenu
----
-- runFlow:
-    when:
-      platform: Android
-    file: ../android/OpenSideMenu.yml

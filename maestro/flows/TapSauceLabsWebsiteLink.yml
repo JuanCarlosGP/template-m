@@ -1,7 +1,0 @@
-appId: ${APP_ID}
-name: TapSauceLabsWebsiteLink
----
-- runFlow:
-    when:
-      platform: Android
-    file: ../android/TapSauceLabsWebsiteLink.yml

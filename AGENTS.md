@@ -11,8 +11,9 @@ Optional AI playbooks live in [`docs/agent/`](docs/agent/README.md). End-to-end 
 **Core** (works without Azure, CI vendor, or a real app in demo mode):
 
 ```
-features ──► gherkin-runner.js ──► step-definitions/ ──► flows/*.yml ──► device
-                  │
+features ──► gherkin-runner.js ──► step-definitions/ ──► shared/<area>/*.yml ──► device
+                  │                         │
+                  │                         └──► maestro/.tmp/scenarios/  (one YAML per scenario)
                   └──► reports/summary.json + junit.xml + index.html
 ```
 
@@ -28,11 +29,13 @@ Azure Test Plans ──► gherkin-runner.js ──► … ──► device
 - **Step definitions** (`maestro/step-definitions/*.json`) — map each Gherkin step to a
   Maestro flow name (or `null` when the step is a precondition/assertion handled inside
   another flow). `index.js` auto-discovers and merges every `*.json` in that directory.
-- **Flows** (`maestro/flows/*.yml`) — the Maestro flow the runner invokes by name.
-  `flows/X.yml` typically delegates to `shared/X.yml`, which branches per platform into
-  `ios/` and `android/` flows via `runFlow: when: { platform: iOS | Android }`.
-- **Runner** (`maestro/scripts/gherkin-runner.js`) — parses features, resolves steps,
-  runs the flows on device, and (unless `--no-publish`) publishes results to Azure.
+- **Flows** (`maestro/shared/<area>/*.yml`) — the Maestro YAML the runner invokes
+  (`"flow": "<area>/<Name>"`). Area folders match `step-definitions/<area>.json`.
+  OS chrome is `ios/` and `android/` via `runFlow: when: { platform: iOS | Android }`.
+- **Runner** (`maestro/scripts/gherkin-runner.ts`, executed with `tsx`) — parses features, resolves steps,
+  writes one composer YAML per scenario (opt out with `--per-flow`). A local run passes every composer to one `maestro test`,
+  and (unless `--no-publish`) publishes results to Azure. A failure screenshot lands in
+  `reports/screenshots/`.
 
 ## Optional authoring (AI)
 
@@ -62,10 +65,10 @@ After fork, add tests for your app using the same layout — see [README § Tras
   order within a JSON is not the tie-breaker. Prefer longer, more specific patterns; avoid
   near-duplicates (the Gherkin dictionary warns on ambiguity).
 - **Parameterised steps** use a regex `pattern` plus a `params` array; the captured groups
-  are passed to the flow as `--env` vars (e.g. `USERNAME`, `PASSWORD`).
+  are passed as `runFlow.env` on the composer (and `--env` with `--per-flow`).
 - **Flow file shape:** `appId: ${APP_ID}` header, a `name:`, then `---`, then steps.
-- **Platform-specific flows** live in `ios/` and `android/`; shared logic in `shared/`.
-  The entry flow in `flows/` branches by platform. Cover **both iOS and Android**.
+- **Platform-specific OS chrome** lives in `ios/` and `android/`; shared logic in
+  `shared/<area>/`. Cover **both iOS and Android**. Do not add `maestro/flows/`.
 - **Never hardcode credentials** in tracked files. `USERNAME`/`PASSWORD`/`AZURE_DEVOPS_PAT`
   live only in `.env` (gitignored).
 
@@ -87,7 +90,8 @@ npm run validate                                           # static check, no de
 npm run doctor                                             # preflight: deps, Maestro, devices (soft), PAT
 npm run doctor:device                                      # agent gate: fail if no device connected
 npm run feature -- --feature maestro/features/<Area>.feature --platform android --no-publish
-npm run flow:android -- --flow maestro/flows/OpenApp.yml   # direct flow, no runner
+npm run flow:android -- --flow maestro/shared/common/OpenApp.yml   # direct flow, no runner
+npm run compose -- --feature maestro/features/MyDemoAppAuth.feature   # write composers only
 npm run gherkin-report                                     # Gherkin dictionary UI
 ```
 

@@ -15,7 +15,7 @@ npm run check
 
 `npm run check` runs, in order:
 
-1. **`npm test`** — unit tests (`maestro/scripts/lib/*.test.js`)
+1. **`npm test`** — unit tests (`maestro/scripts/**/*.test.ts`, via `tsx`)
 2. **`npm run validate`** — Gherkin, step-definitions schema, flows
 3. **`gherkin-extract`** — fails if `pasosSinDefinicion > 0`
 

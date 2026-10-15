@@ -4,18 +4,18 @@ Node scripts for **IDE integration** (post-edit validation, credential guard). N
 
 | Script | When | Effect |
 |--------|------|--------|
-| [`block-secrets.js`](block-secrets.js) | Before Edit/Write | Blocks real credentials in tracked files |
-| [`validate-edit.js`](validate-edit.js) | After Edit/Write on features/step-defs/flows | Runs static validate |
-| [`env-readiness.js`](env-readiness.js) | Session start | Prints device/env summary |
+| [`block-secrets.ts`](block-secrets.ts) | Before Edit/Write | Blocks real credentials in tracked files |
+| [`validate-edit.ts`](validate-edit.ts) | After Edit/Write on features/step-defs/flows | Runs static validate |
+| [`env-readiness.ts`](env-readiness.ts) | Session start | Prints device/env summary |
 
 ## Wire-up (local, per developer)
 
 Each IDE uses different config for post-edit hooks. Example (replace `$REPO` with your project root):
 
 ```bash
-node "$REPO/maestro/scripts/hooks/block-secrets.js"
-node "$REPO/maestro/scripts/hooks/validate-edit.js"
-node "$REPO/maestro/scripts/hooks/env-readiness.js"
+node --import tsx "$REPO/maestro/scripts/hooks/block-secrets.ts"
+node --import tsx "$REPO/maestro/scripts/hooks/validate-edit.ts"
+node --import tsx "$REPO/maestro/scripts/hooks/env-readiness.ts"
 ```
 
 See also: [`docs/agent/`](../../../docs/agent/README.md), [`AGENTS.md`](../../../AGENTS.md).

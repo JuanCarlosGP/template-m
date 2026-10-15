@@ -2,7 +2,7 @@
   "steps": [
     {
       "pattern": "pulso el enlace al sitio de Sauce Labs",
-      "flow": "TapSauceLabsWebsiteLink",
+      "flow": "about/TapSauceLabsWebsiteLink",
       "description": "Tap the About screen link that opens Sauce Labs in an external browser"
     }
   ]
