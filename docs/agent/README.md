@@ -45,7 +45,7 @@ Ships **only `maestro`** so the IDE opens cleanly. Add one TMS block when automa
 
 ### Personalize after fork
 
-1. **`maestro`** — `${HOME}/.maestro/bin/maestro` (Unix); Windows: `${USERPROFILE}\\.maestro\\bin\\maestro.bat`
+1. **`maestro`** — `${HOME}/.maestro/bin/maestro` (Unix); Windows: `C:\\maestro\\maestro\\bin\\maestro.bat`
 2. **TMS** — [`mcp-examples.md`](mcp-examples.md)
 3. **No TMS** — paste issue + Gherkin; scout + planner still work
 

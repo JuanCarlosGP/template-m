@@ -1,6 +1,6 @@
 {
   "name": "izertis-maestro-template",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Izertis Maestro Template — E2E framework with Maestro and Gherkin",
   "private": true,
   "engines": {

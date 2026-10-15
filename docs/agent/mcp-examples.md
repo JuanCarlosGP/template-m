@@ -24,7 +24,7 @@ Related: [agent playbooks](README.md) · [`e2e-specs/`](../../e2e-specs/README.m
 1. **Keep `maestro`** when inspecting the screen or running flows from the agent.
 2. **Add one TMS** if tickets live in Azure DevOps, GitHub, or GitLab — copy a block from [Full examples](#full-mcpjson-examples) or per-server sections below.
 3. **Never enable multiple TMS blocks** — the IDE connects to all of them; unused ones fail or waste context.
-4. **Windows:** point `maestro` `command` at `${USERPROFILE}\\.maestro\\bin\\maestro.bat` if needed.
+4. **Windows:** point `maestro` `command` at `C:\\maestro\\maestro\\bin\\maestro.bat` if needed.
 
 ## TMS → block and auth
 
@@ -56,7 +56,7 @@ Your IDE loads every server in `.mcp.json` at startup — unused or misconfigure
 
 Already in `.mcp.json`. Required only for `selector-explorer` and live debugging in `author-e2e-test`.
 
-**Windows native** — point `command` at your install, e.g. `${USERPROFILE}\\.maestro\\bin\\maestro.bat` ([Maestro install](https://docs.maestro.dev/maestro-cli/how-to-install-maestro-cli)).
+**Windows native** — point `command` at your install, e.g. `C:\\maestro\\maestro\\bin\\maestro.bat` ([Maestro install](https://docs.maestro.dev/maestro-cli/how-to-install-maestro-cli)).
 
 ---
 

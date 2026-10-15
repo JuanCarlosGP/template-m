@@ -72,7 +72,7 @@ function printWindowsInstructions() {
   console.log(`  ${MAESTRO_DOCS}`)
   console.log('')
   console.log('After install, verify with:  maestro --version')
-  console.log('Optional: set MAESTRO_CLI in .env to the full path of maestro.bat.')
+  console.log('Optional: set MAESTRO_CLI in .env to C:\\maestro\\maestro\\bin\\maestro.bat.')
 }
 
 function installUnix() {

@@ -276,7 +276,7 @@ async function runMaestroFlow(flowName, env, platform) {
       if (err && (err.code === 'ENOENT' || err.errno === -4058)) {
         throw new Error(
           `No se encuentra el ejecutable Maestro (${maestroBin}). ` +
-            'Instala Maestro, añádelo al PATH o define MAESTRO_CLI (p. ej. C:\\maestro\\maestro\\bin\\maestro.bat en Windows).'
+            'Instala Maestro, añádelo al PATH o define MAESTRO_CLI (p. ej. C:\\maestro\\maestro\\bin\\maestro.bat en Windows o $HOME/.maestro/bin/maestro en Unix).'
         )
       }
       const canRetry = attempt < maxAttempts

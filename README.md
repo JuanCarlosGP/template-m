@@ -1,6 +1,6 @@
 # Izertis Maestro Template
 
-**Versión:** 0.3.3
+**Versión:** 0.3.4
 
 Plantilla del framework de tests E2E con **Maestro** y **Gherkin**. App de demo: **[Sauce Labs My Demo App](https://github.com/saucelabs/my-demo-app-android)** (Android, `com.saucelabs.mydemoapp.android`). Sustituye o amplía con tests de tu app.
 

@@ -11,11 +11,11 @@
 
 ### Changed
 
-- Documented the recommended Windows `PATH` setup and the `MAESTRO_CLI` fallback.
+- Documented adding `C:\maestro\maestro\bin` to `PATH` on Windows (install outside the user profile) and `MAESTRO_CLI` as fallback.
 - Updated Maestro installation links to the current CLI documentation.
-- Added actionable Windows Maestro paths to setup and runner error messages.
+- Added dual Windows/Unix examples to runner error messages.
 
 ### Verification
 
 - `npm run check` passes with 62 tests.
-- Framework version remains `0.3.4`.
+- Framework version is `0.3.4` in `VERSION`, `package.json`, `package-lock.json`, and `README.md`.
